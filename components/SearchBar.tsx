@@ -9,7 +9,7 @@ interface SearchBarProps {
 
 export const SearchBar: React.FC<SearchBarProps> = memo(({ value, onChange }) => {
     return (
-        <div className="liquid-glass rounded-[1.5rem] p-1.5 flex items-center gap-2 pl-4 mx-1 transition-all focus-within:bg-white/10 focus-within:shadow-[0_0_30px_rgba(255,255,255,0.1)] group">
+        <div className="liquid-glass rounded-[1.5rem] p-1.5 flex items-center gap-2 pl-4 mx-1 transition-all focus-within:bg-white/5 group">
             <Search size={18} className="text-white/30 group-focus-within:text-white/80 transition-colors" />
             <input 
                 value={value}

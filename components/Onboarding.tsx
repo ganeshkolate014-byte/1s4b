@@ -16,9 +16,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         animate={{ scale: 1, opacity: 1 }}
         className="max-w-sm w-full"
       >
-        <GlassCard className="p-8 text-center bg-white/20">
+        <GlassCard className="p-8 text-center bg-white/10">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/40">
+            <div className="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center">
               <Sparkles size={40} className="text-white" />
             </div>
           </div>
@@ -48,7 +48,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
           <button
             onClick={onComplete}
-            className="w-full bg-white text-black font-bold py-4 rounded-2xl transition-transform active:scale-95 shadow-xl"
+            className="w-full bg-white text-black font-bold py-4 rounded-2xl transition-transform active:scale-95"
           >
             Get Started
           </button>

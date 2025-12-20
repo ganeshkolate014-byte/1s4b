@@ -30,9 +30,6 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
   const x = useMotionValue(0);
   
   // Dynamic transformations based on swipe distance
-  // - Icon appears and grows
-  // - Background fades in
-  // - Icon rotates slightly for character
   const iconOpacity = useTransform(x, [0, -40], [0, 1]);
   const iconScale = useTransform(x, [0, -80], [0.5, 1.2]);
   const iconRotate = useTransform(x, [0, -80], [0, -15]); // Slight tilt
@@ -88,7 +85,7 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
             transition-colors duration-200 cursor-pointer
             ${task.completed 
                 ? 'bg-zinc-900 border border-white/[0.05]' 
-                : 'bg-[#1c1c1e] border border-white/[0.08] hover:bg-zinc-800'}
+                : 'bg-[#1c1c1e] border border-white/[0.05] hover:bg-zinc-800'}
         `}
       >
         {/* Checkbox */}
@@ -144,7 +141,7 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
 
              {task.priority === 'high' && !task.completed && (
                  <div className="ml-auto sm:ml-0 flex items-center gap-1">
-                     <div className="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></div>
+                     <div className="h-1.5 w-1.5 rounded-full bg-rose-500"></div>
                  </div>
              )}
           </div>

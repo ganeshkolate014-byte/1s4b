@@ -14,8 +14,8 @@ const FilterPill = memo(({ children, active, onClick }: { children: React.ReactN
     className={`
         px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border
         ${active 
-            ? 'bg-white text-black border-white shadow-[0_0_25px_rgba(255,255,255,0.4)] scale-105 z-10' 
-            : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30 backdrop-blur-md'}
+            ? 'bg-white text-black border-white scale-105 z-10' 
+            : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30'}
     `}
   >
     {children}

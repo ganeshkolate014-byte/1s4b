@@ -45,7 +45,7 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
                 className={`
                     flex flex-col items-center justify-center w-[56px] h-[68px] rounded-2xl border transition-all duration-200
                     ${isCustomDate 
-                        ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-100 z-10' 
+                        ? 'bg-white text-black border-white scale-100 z-10' 
                         : 'bg-white/[0.05] text-white/40 border-transparent hover:bg-white/[0.1] hover:text-white'}
                 `}
             >
@@ -78,7 +78,7 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
                     className={`
                         flex flex-col items-center justify-center min-w-[56px] h-[68px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
                         ${isSelected 
-                            ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-100 z-10' 
+                            ? 'bg-white text-black border-white scale-100 z-10' 
                             : 'bg-white/[0.05] text-white/40 border-transparent hover:bg-white/[0.1]'}
                     `}
                 >
@@ -138,7 +138,7 @@ const CategorySelector = memo(({ category, onSelect }: { category: Category, onS
                 className={`
                     px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border
                     ${category === cat 
-                        ? 'bg-white/10 text-white border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]' 
+                        ? 'bg-white/10 text-white border-white/20' 
                         : 'bg-transparent text-white/20 border-white/5 hover:border-white/10'}
                 `}
             >
@@ -229,7 +229,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70]"
             style={{ willChange: 'transform' }}
           >
-             {/* LIQUID GLASS HEAVY CONTAINER */}
+             {/* CONTAINER */}
              <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden">
                 
                 {/* Header Actions */}
@@ -240,7 +240,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                     >
                         <X size={18} />
                     </button>
-                    <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-md">
+                    <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5">
                          <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">
                             {editingTask ? 'Edit Task' : 'New Task'}
                          </span>
@@ -256,7 +256,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="What needs to be done?"
                             rows={1}
-                            className="w-full bg-transparent text-3xl font-medium text-white placeholder-white/20 outline-none border-none p-0 resize-none leading-tight drop-shadow-lg"
+                            className="w-full bg-transparent text-3xl font-medium text-white placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
                             style={{ minHeight: '3rem' }}
                         />
                         <input
@@ -268,9 +268,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                         />
                     </div>
 
-                    {/* Controls Container - Darker glass mix */}
+                    {/* Controls Container */}
                     <div 
-                        className="bg-black/40 backdrop-blur-xl p-6 space-y-8 rounded-t-[2.5rem] border-t border-white/5 relative"
+                        className="bg-[#18181b] p-6 space-y-8 rounded-t-[2.5rem] border-t border-white/5 relative"
                         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
                     >
                         <div className="space-y-3">
