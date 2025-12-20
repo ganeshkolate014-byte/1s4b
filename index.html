@@ -14,7 +14,7 @@
         :root {
             --surface-card: #1c1c1e;
             --surface-modal: #2c2c2e;
-            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.05); /* Further reduced opacity */
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -29,18 +29,17 @@
             overscroll-behavior-y: none;
         }
 
-        /* REPLACED LIQUID GLASS WITH MATTE SURFACE */
+        /* REPLACED LIQUID GLASS WITH FLAT MATTE SURFACE */
+        /* Removed box-shadows to fix 'glow' and 'lag' */
         .liquid-glass {
             background: var(--surface-card);
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transform: translate3d(0,0,0);
         }
 
         .liquid-glass-heavy {
             background: var(--surface-modal);
             border: 1px solid var(--border-color);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             transform: translate3d(0,0,0);
         }
 

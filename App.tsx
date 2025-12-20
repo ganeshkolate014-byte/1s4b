@@ -107,16 +107,15 @@ export const App: React.FC = () => {
         className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none"
         style={{ bottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="pointer-events-auto flex items-center gap-2 p-2.5 liquid-glass-heavy rounded-[2.2rem] shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+        <div className="pointer-events-auto flex items-center gap-2 p-2.5 liquid-glass-heavy rounded-[2.2rem] shadow-xl shadow-black/50">
             <DockIcon icon={<SlidersHorizontal size={18} />} />
             
             <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleCreateOpen}
-                className="w-14 h-14 bg-white text-black rounded-[1.2rem] flex items-center justify-center mx-2 shadow-[0_0_25px_rgba(255,255,255,0.2)] relative overflow-hidden group"
+                className="w-14 h-14 bg-white text-black rounded-[1.2rem] flex items-center justify-center mx-2 relative overflow-hidden group"
             >
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-300/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Plus size={26} strokeWidth={2.5} className="relative z-10" />
             </motion.button>
             
