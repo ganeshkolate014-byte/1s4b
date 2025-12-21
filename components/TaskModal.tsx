@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Sparkles, Zap, AlertCircle, ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
 import { Task, Category, Priority } from '../types';
@@ -167,6 +167,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
   const [category, setCategory] = useState<Category>('Personal');
   const [priority, setPriority] = useState<Priority>('medium');
   const [selectedDate, setSelectedDate] = useState<string>('');
+  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const nextDays = useMemo(() => Array.from({ length: 30 }, (_, i) => {
     const d = new Date();
@@ -212,7 +214,20 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
       setPriority('medium');
       setSelectedDate(nextDays[0].full);
     }
+    
+    // Reset height on open
+    if(textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+    }
   }, [editingTask, isOpen, nextDays]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+      if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      }
+  }, [title, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,21 +281,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                     <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
                         
                         {/* Main Input Area */}
-                        <div className="px-6 py-4 space-y-4 shrink-0">
+                        <div className="px-5 sm:px-6 py-4 space-y-3 shrink-0">
                             <textarea
+                                ref={textareaRef}
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="What needs to be done?"
                                 rows={1}
-                                className="w-full bg-transparent text-[28px] sm:text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
-                                style={{ minHeight: '3rem' }}
+                                className="w-full bg-transparent text-[22px] sm:text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-white/40 outline-none border-none p-0 resize-none leading-tight"
+                                style={{ minHeight: '32px' }}
                             />
                             <input
                                 type="text"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Add details (optional)"
-                                className="w-full bg-transparent text-[16px] sm:text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/10 outline-none border-none p-0"
+                                className="w-full bg-transparent text-[15px] sm:text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0"
                             />
                         </div>
 
