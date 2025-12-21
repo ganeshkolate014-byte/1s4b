@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Plus, Command, SlidersHorizontal } from 'lucide-react';
 import { Task, Category, Priority } from './types';
@@ -142,6 +141,7 @@ export const App: React.FC = () => {
             <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
+                transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.2 }}
                 onClick={handleCreateOpen}
                 className="w-14 h-14 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-[1.6rem] flex items-center justify-center mx-1 relative overflow-hidden group shadow-lg shadow-black/10 dark:shadow-white/10 transition-colors duration-300"
             >
