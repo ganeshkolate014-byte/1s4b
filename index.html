@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -9,38 +9,63 @@
     <meta name="theme-color" content="#000000">
     <title>Task List</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              // Custom colors if needed
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
+            --bg-body: #f2f2f7; /* iOS Light Gray */
+            --text-main: #000000;
+            --surface-card: #ffffff;
+            --surface-modal: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .dark {
+            --bg-body: #000000;
+            --text-main: #ffffff;
             --surface-card: #1c1c1e;
             --surface-modal: #2c2c2e;
-            --border-color: rgba(255, 255, 255, 0.05); /* Further reduced opacity */
+            --border-color: rgba(255, 255, 255, 0.05);
         }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
             padding: 0;
-            background: #000000;
-            color: white;
+            background: var(--bg-body);
+            color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
             transform: translateZ(0);
             overscroll-behavior-y: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* REPLACED LIQUID GLASS WITH FLAT MATTE SURFACE */
-        /* Removed box-shadows to fix 'glow' and 'lag' */
+        /* LIQUID GLASS - ADAPTIVE */
         .liquid-glass {
             background: var(--surface-card);
             border: 1px solid var(--border-color);
             transform: translate3d(0,0,0);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .liquid-glass-heavy {
             background: var(--surface-modal);
             border: 1px solid var(--border-color);
             transform: translate3d(0,0,0);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         /* Smooth Fade Mask for Scrolls */

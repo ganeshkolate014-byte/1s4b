@@ -16,6 +16,15 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Theme State
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('theme');
+        return saved ? saved === 'dark' : true; // Default to dark
+    }
+    return true;
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +33,23 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('liquid_tasks', JSON.stringify(tasks));
   }, [tasks]);
+
+  // Apply Theme Class
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+        root.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        // Update meta theme color for mobile browsers
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
+    } else {
+        root.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f2f2f7');
+    }
+  }, [isDark]);
+
+  const toggleTheme = useCallback(() => setIsDark(prev => !prev), []);
 
   const filteredTasks = useMemo(() => {
     return tasks
@@ -83,11 +109,14 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen px-6 pt-10 max-w-[500px] mx-auto flex flex-col">
+    <div 
+        className="relative min-h-screen px-4 sm:px-6 max-w-[500px] mx-auto flex flex-col"
+        style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
+    >
       
-      <Header />
+      <Header isDark={isDark} toggleTheme={toggleTheme} />
 
-      <div className="space-y-8 flex-shrink-0">
+      <div className="space-y-6 sm:space-y-8 flex-shrink-0">
         <DynamicDashboard stats={stats} />
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -105,21 +134,21 @@ export const App: React.FC = () => {
       {/* Floating Dock */}
       <div 
         className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none"
-        style={{ bottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="pointer-events-auto flex items-center gap-2 p-2.5 liquid-glass-heavy rounded-[2.2rem] shadow-xl shadow-black/50">
-            <DockIcon icon={<SlidersHorizontal size={18} />} />
+        <div className="pointer-events-auto flex items-center gap-2 p-2 liquid-glass-heavy rounded-[2rem] shadow-xl shadow-black/10 dark:shadow-black/50 backdrop-blur-2xl transition-colors duration-300">
+            <DockIcon icon={<SlidersHorizontal size={20} />} />
             
             <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleCreateOpen}
-                className="w-14 h-14 bg-white text-black rounded-[1.2rem] flex items-center justify-center mx-2 relative overflow-hidden group"
+                className="w-14 h-14 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-[1.6rem] flex items-center justify-center mx-1 relative overflow-hidden group shadow-lg shadow-black/10 dark:shadow-white/10 transition-colors duration-300"
             >
-                <Plus size={26} strokeWidth={2.5} className="relative z-10" />
+                <Plus size={28} strokeWidth={2.5} className="relative z-10" />
             </motion.button>
             
-            <DockIcon icon={<Command size={18} />} />
+            <DockIcon icon={<Command size={20} />} />
         </div>
       </div>
 
@@ -134,7 +163,7 @@ export const App: React.FC = () => {
 };
 
 const DockIcon = memo(({ icon }: any) => (
-    <button className="w-11 h-11 rounded-2xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+    <button className="w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-zinc-400 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
         {icon}
     </button>
 ));
