@@ -1,6 +1,7 @@
 
 import React, { memo } from 'react';
-import { CATEGORIES } from '../constants';
+import { motion } from 'framer-motion';
+import { CATEGORIES, CATEGORY_ICONS } from '../constants';
 import { Category } from '../types';
 
 interface CategoryFilterProps {
@@ -8,26 +9,47 @@ interface CategoryFilterProps {
     onSelect: (cat: Category | 'All') => void;
 }
 
-const FilterPill = memo(({ children, active, onClick }: { children: React.ReactNode, active: boolean, onClick: () => void }) => (
+const FilterPill = memo(({ children, icon, active, onClick }: { children: React.ReactNode, icon?: React.ReactNode, active: boolean, onClick: () => void }) => (
   <button 
     onClick={onClick}
     className={`
-        px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0 border
+        relative px-4 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 whitespace-nowrap flex-shrink-0 border flex items-center gap-2
         ${active 
-            ? 'bg-white text-black border-white scale-105 z-10' 
-            : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30'}
+            ? 'text-white dark:text-black border-transparent z-10' 
+            : 'bg-black/5 border-black/5 text-zinc-500 hover:bg-black/10 hover:text-black dark:bg-white/5 dark:border-white/10 dark:text-white/50 dark:hover:bg-white/10 dark:hover:text-white'}
     `}
   >
-    {children}
+    {active && (
+        <motion.div
+            layoutId="activeCategory"
+            className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-full"
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        />
+    )}
+    <span className="relative z-10 flex items-center gap-1.5">
+        {icon && <span className="opacity-70">{icon}</span>}
+        {children}
+    </span>
   </button>
 ));
 
 export const CategoryFilter: React.FC<CategoryFilterProps> = memo(({ selected, onSelect }) => {
     return (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 pt-1 px-1 mask-linear-fade">
-            <FilterPill active={selected === 'All'} onClick={() => onSelect('All')}>All</FilterPill>
+        <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-4 pt-1 px-1 mask-linear-fade">
+            <FilterPill 
+                active={selected === 'All'} 
+                onClick={() => onSelect('All')}
+                icon={CATEGORY_ICONS['All']}
+            >
+                All
+            </FilterPill>
             {CATEGORIES.map(cat => (
-                <FilterPill key={cat} active={selected === cat} onClick={() => onSelect(cat)}>
+                <FilterPill 
+                    key={cat} 
+                    active={selected === cat} 
+                    onClick={() => onSelect(cat)}
+                    icon={CATEGORY_ICONS[cat]}
+                >
                     {cat}
                 </FilterPill>
             ))}

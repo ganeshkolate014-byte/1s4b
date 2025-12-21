@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Sparkles, Zap, AlertCircle, ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
 import { Task, Category, Priority } from '../types';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, CATEGORY_ICONS } from '../constants';
 import { LiquidButton } from './LiquidButton';
 
 interface TaskModalProps {
@@ -43,15 +43,15 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
             <button
                 type="button"
                 className={`
-                    flex flex-col items-center justify-center w-[56px] h-[68px] rounded-2xl border transition-all duration-200
+                    flex flex-col items-center justify-center w-[56px] h-[72px] rounded-2xl border transition-all duration-200
                     ${isCustomDate 
-                        ? 'bg-white text-black border-white scale-100 z-10' 
-                        : 'bg-white/[0.05] text-white/40 border-transparent hover:bg-white/[0.1] hover:text-white'}
+                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
+                        : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 hover:text-zinc-900 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1] dark:hover:text-white'}
                 `}
             >
                 {isCustomDate && customDateDisplay ? (
                     <>
-                        <span className="text-[9px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
+                        <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
                             {customDateDisplay.month}
                         </span>
                         <span className="text-lg font-bold leading-none">
@@ -61,7 +61,7 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
                 ) : (
                     <>
                         <CalendarIcon size={20} className="mb-1 opacity-80" />
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Pick</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Pick</span>
                     </>
                 )}
             </button>
@@ -76,13 +76,13 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
                     type="button"
                     onClick={() => onSelect(date.full)}
                     className={`
-                        flex flex-col items-center justify-center min-w-[56px] h-[68px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
+                        flex flex-col items-center justify-center min-w-[56px] h-[72px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
                         ${isSelected 
-                            ? 'bg-white text-black border-white scale-100 z-10' 
-                            : 'bg-white/[0.05] text-white/40 border-transparent hover:bg-white/[0.1]'}
+                            ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
+                            : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1]'}
                     `}
                 >
-                    <span className="text-[9px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
                         {date.isToday ? 'TDY' : date.dayName}
                     </span>
                     <span className="text-lg font-bold leading-none">
@@ -95,7 +95,7 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
 ));
 
 const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onSelect: (p: Priority) => void }) => (
-    <div className="h-12 bg-white/[0.03] rounded-xl p-1 flex relative border border-white/5">
+    <div className="h-14 bg-black/5 dark:bg-white/[0.03] rounded-xl p-1 flex relative border border-black/5 dark:border-white/5">
         {(['low', 'medium', 'high'] as Priority[]).map((p) => {
              const isActive = priority === p;
              const config = priorityConfig[p];
@@ -106,7 +106,7 @@ const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onS
                     key={p}
                     type="button"
                     onClick={() => onSelect(p)}
-                    className={`flex-1 relative z-10 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 ${isActive ? theme.text : 'text-white/30 hover:text-white/50'}`}
+                    className={`flex-1 relative z-10 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 ${isActive ? theme.text : 'text-zinc-400 hover:text-zinc-600 dark:text-white/30 dark:hover:text-white/50'}`}
                  >
                     {isActive && (
                         <motion.div
@@ -130,21 +130,34 @@ const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onS
 
 const CategorySelector = memo(({ category, onSelect }: { category: Category, onSelect: (c: Category) => void }) => (
     <div className="flex flex-wrap gap-2 pt-2">
-         {CATEGORIES.map(cat => (
-            <button
-                key={cat}
-                type="button"
-                onClick={() => onSelect(cat)}
-                className={`
-                    px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border
-                    ${category === cat 
-                        ? 'bg-white/10 text-white border-white/20' 
-                        : 'bg-transparent text-white/20 border-white/5 hover:border-white/10'}
-                `}
-            >
-                {cat}
-            </button>
-         ))}
+         {CATEGORIES.map(cat => {
+            const isActive = category === cat;
+            return (
+                <button
+                    key={cat}
+                    type="button"
+                    onClick={() => onSelect(cat)}
+                    className={`
+                        relative px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center gap-2
+                        ${isActive 
+                            ? 'text-white border-transparent z-10 dark:text-black' 
+                            : 'bg-transparent text-zinc-400 border-zinc-200 dark:text-white/20 dark:border-white/5 dark:hover:border-white/10'}
+                    `}
+                >
+                    {isActive && (
+                        <motion.div
+                            layoutId="category-pill-modal"
+                            className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-xl"
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                        {CATEGORY_ICONS[cat]}
+                        {cat}
+                    </span>
+                </button>
+            )
+         })}
      </div>
 ));
 
@@ -218,30 +231,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             exit={{ opacity: 0 }}
             onClick={onClose}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[60]"
+            className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-[2px] z-[60]"
             style={{ willChange: 'opacity' }}
           />
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: "tween", duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70]"
             style={{ willChange: 'transform' }}
           >
              {/* CONTAINER */}
-             <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden">
+             <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden shadow-2xl">
                 
                 {/* Header Actions */}
                 <div className="flex justify-between items-center p-6 pb-4">
                     <button 
                         onClick={onClose}
-                        className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-95 border border-white/5"
+                        className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 border border-black/5 dark:border-white/5"
                     >
-                        <X size={18} />
+                        <X size={20} />
                     </button>
-                    <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5">
-                         <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">
+                    <div className="px-5 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/60">
                             {editingTask ? 'Edit Task' : 'New Task'}
                          </span>
                     </div>
@@ -256,7 +269,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="What needs to be done?"
                             rows={1}
-                            className="w-full bg-transparent text-3xl font-medium text-white placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
+                            className="w-full bg-transparent text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
                             style={{ minHeight: '3rem' }}
                         />
                         <input
@@ -264,18 +277,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Add details (optional)"
-                            className="w-full bg-transparent text-base text-white/50 placeholder-white/10 outline-none border-none p-0"
+                            className="w-full bg-transparent text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/10 outline-none border-none p-0"
                         />
                     </div>
 
                     {/* Controls Container */}
                     <div 
-                        className="bg-[#18181b] p-6 space-y-8 rounded-t-[2.5rem] border-t border-white/5 relative"
+                        className="bg-zinc-50 dark:bg-[#18181b] p-6 space-y-8 rounded-t-[2.5rem] border-t border-black/5 dark:border-white/5 relative"
                         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
                     >
                         <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 pl-1 flex items-center gap-2">
-                                <Clock size={12} /> Schedule
+                            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 pl-1 flex items-center gap-2">
+                                <Clock size={14} /> Schedule
                             </label>
                             
                             <DateScroll 
@@ -289,7 +302,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
 
                         <div className="space-y-3 relative">
                              <div className="flex justify-between items-center px-1">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Impact Level</label>
+                                <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30">Impact Level</label>
                              </div>
                              
                              <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
@@ -298,8 +311,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                         <CategorySelector category={category} onSelect={handleCategorySelect} />
 
                         <LiquidButton type="submit" priority={priority}>
-                           <Sparkles size={16} className="text-black/60" />
-                           <span className="text-black">{editingTask ? 'Save Changes' : 'Create Task'}</span>
+                           <Sparkles size={16} className="text-white dark:text-black/60" />
+                           <span className="text-white dark:text-black">{editingTask ? 'Save Changes' : 'Create Task'}</span>
                         </LiquidButton>
                     </div>
                 </form>

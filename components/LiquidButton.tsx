@@ -22,8 +22,8 @@ export const LiquidButton: React.FC<LiquidButtonProps> = ({ onClick, children, c
         transition-all duration-200 ease-out
         flex items-center justify-center gap-2.5
         overflow-hidden
-        bg-white text-black
-        hover:bg-gray-100
+        bg-zinc-900 text-white dark:bg-white dark:text-black
+        hover:bg-black dark:hover:bg-gray-100
         ${className}
       `}
     >

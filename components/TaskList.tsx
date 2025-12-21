@@ -12,19 +12,35 @@ interface TaskListProps {
     onEdit: (task: Task) => void;
 }
 
+const listVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.05
+        }
+    }
+};
+
 export const TaskList: React.FC<TaskListProps> = memo(({ tasks, onToggle, onDelete, onEdit }) => {
     return (
         <div 
-            className="flex-1 flex flex-col mt-8 px-1 min-h-[300px]"
-            style={{ paddingBottom: 'calc(10rem + env(safe-area-inset-bottom))' }}
+            className="flex-1 flex flex-col mt-6 sm:mt-8 px-1 min-h-[300px]"
+            style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom))' }}
         >
-            <div className="flex justify-between items-end mb-5 px-1 flex-shrink-0">
-                <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest">Your Tasks</h3>
+            <div className="flex justify-between items-end mb-4 px-1 flex-shrink-0">
+                <h3 className="text-sm font-bold text-zinc-400 dark:text-white/50 uppercase tracking-widest transition-colors">Your Tasks</h3>
             </div>
             
             <AnimatePresence mode="popLayout" initial={false}>
                 {tasks.length > 0 ? (
-                    <div className="space-y-3">
+                    <motion.div 
+                        className="space-y-3"
+                        variants={listVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <AnimatePresence mode='popLayout'>
                         {tasks.map(task => (
                             <TaskItem 
                                 key={task.id} 
@@ -34,7 +50,8 @@ export const TaskList: React.FC<TaskListProps> = memo(({ tasks, onToggle, onDele
                                 onEdit={onEdit}
                             />
                         ))}
-                    </div>
+                        </AnimatePresence>
+                    </motion.div>
                 ) : (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }} 
@@ -44,11 +61,11 @@ export const TaskList: React.FC<TaskListProps> = memo(({ tasks, onToggle, onDele
                         className="flex-1 flex flex-col items-center justify-center text-center space-y-4 opacity-50 mt-10"
                     >
                         <div className="w-16 h-16 rounded-3xl liquid-glass flex items-center justify-center">
-                            <SlidersHorizontal className="text-white/30" size={24} />
+                            <SlidersHorizontal className="text-zinc-400 dark:text-white/30" size={24} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-white font-medium text-sm">No tasks found</p>
-                            <p className="text-white/30 text-xs">Tap the + button to create one</p>
+                            <p className="text-zinc-900 dark:text-white font-medium text-sm">No tasks found</p>
+                            <p className="text-zinc-400 dark:text-white/30 text-xs">Tap the + button to create one</p>
                         </div>
                     </motion.div>
                 )}
