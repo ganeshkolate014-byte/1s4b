@@ -64,7 +64,7 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
         transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
         className={`
             relative z-10 overflow-hidden
-            flex items-center gap-3.5 sm:gap-5 p-4 sm:p-5 rounded-[1.2rem]
+            flex items-center gap-3 sm:gap-5 p-3.5 sm:p-5 rounded-[1.2rem]
             transition-colors duration-200 cursor-pointer
             ${task.completed 
                 ? 'bg-zinc-100 dark:bg-zinc-900 border border-black/5 dark:border-white/[0.05]' 
@@ -105,26 +105,26 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
 
         <div className="flex-1 min-w-0 z-10 select-none">
           <h3 className={`
-            text-[17px] font-semibold tracking-tight transition-all duration-300 leading-snug truncate
+            text-[16px] sm:text-[17px] font-semibold tracking-tight transition-all duration-300 leading-snug truncate
             ${task.completed ? 'text-zinc-400 dark:text-white/30 line-through decoration-zinc-300 dark:decoration-white/20' : 'text-zinc-900 dark:text-white'}
           `}>
             {task.title}
           </h3>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
              <span className={`
-                text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1
+                text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1
                 ${task.completed 
                     ? 'text-zinc-400 bg-zinc-100 dark:text-white/20 dark:bg-white/5' 
                     : 'text-blue-600 bg-blue-100 dark:text-blue-200 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/20'}
              `}>
-                {CATEGORY_ICONS[task.category] && React.cloneElement(CATEGORY_ICONS[task.category] as React.ReactElement, { size: 10 })}
+                {CATEGORY_ICONS[task.category] && React.cloneElement(CATEGORY_ICONS[task.category] as React.ReactElement<{ size: number | string }>, { size: 10 })}
                 {task.category}
              </span>
              
              {!task.completed && dateDisplay && (
                  <div className="flex items-center gap-1 text-zinc-500 dark:text-white/50 bg-zinc-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-white/5">
                     <Calendar size={12} />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">{dateDisplay}</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">{dateDisplay}</span>
                  </div>
              )}
 

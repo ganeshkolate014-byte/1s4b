@@ -239,15 +239,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70]"
+            className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70] flex flex-col justify-end"
             style={{ willChange: 'transform' }}
           >
              {/* CONTAINER */}
-             <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden shadow-2xl">
+             <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
                 
-                {/* Header Actions */}
-                <div className="flex justify-between items-center p-6 pb-4">
+                {/* Header Actions - Fixed at top of modal */}
+                <div className="flex justify-between items-center p-5 pb-2 shrink-0 z-20 bg-inherit relative">
                     <button 
+                        type="button"
                         onClick={onClose}
                         className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 border border-black/5 dark:border-white/5"
                     >
@@ -260,62 +261,65 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col">
-                    
-                    {/* Main Input Area */}
-                    <div className="px-6 pb-8 space-y-4">
-                        <textarea
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="What needs to be done?"
-                            rows={1}
-                            className="w-full bg-transparent text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
-                            style={{ minHeight: '3rem' }}
-                        />
-                        <input
-                            type="text"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Add details (optional)"
-                            className="w-full bg-transparent text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/10 outline-none border-none p-0"
-                        />
-                    </div>
-
-                    {/* Controls Container */}
-                    <div 
-                        className="bg-zinc-50 dark:bg-[#18181b] p-6 space-y-8 rounded-t-[2.5rem] border-t border-black/5 dark:border-white/5 relative"
-                        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-                    >
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 pl-1 flex items-center gap-2">
-                                <Clock size={14} /> Schedule
-                            </label>
-                            
-                            <DateScroll 
-                                selectedDate={selectedDate}
-                                onSelect={handleDateSelect}
-                                days={nextDays}
-                                isCustomDate={isCustomDate}
-                                customDateDisplay={customDateDisplay}
+                {/* SCROLLABLE CONTENT AREA */}
+                <div className="overflow-y-auto overscroll-contain flex-1 custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
+                        
+                        {/* Main Input Area */}
+                        <div className="px-6 py-4 space-y-4 shrink-0">
+                            <textarea
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="What needs to be done?"
+                                rows={1}
+                                className="w-full bg-transparent text-[28px] sm:text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0 resize-none leading-tight"
+                                style={{ minHeight: '3rem' }}
+                            />
+                            <input
+                                type="text"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Add details (optional)"
+                                className="w-full bg-transparent text-[16px] sm:text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/10 outline-none border-none p-0"
                             />
                         </div>
 
-                        <div className="space-y-3 relative">
-                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30">Impact Level</label>
-                             </div>
-                             
-                             <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
+                        {/* Controls Container - Pushes to bottom if space permits */}
+                        <div 
+                            className="bg-zinc-50 dark:bg-[#18181b] p-6 space-y-8 mt-auto border-t border-black/5 dark:border-white/5 relative"
+                            style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+                        >
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 pl-1 flex items-center gap-2">
+                                    <Clock size={14} /> Schedule
+                                </label>
+                                
+                                <DateScroll 
+                                    selectedDate={selectedDate}
+                                    onSelect={handleDateSelect}
+                                    days={nextDays}
+                                    isCustomDate={isCustomDate}
+                                    customDateDisplay={customDateDisplay}
+                                />
+                            </div>
+
+                            <div className="space-y-3 relative">
+                                 <div className="flex justify-between items-center px-1">
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30">Impact Level</label>
+                                 </div>
+                                 
+                                 <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
+                            </div>
+
+                            <CategorySelector category={category} onSelect={handleCategorySelect} />
+
+                            <LiquidButton type="submit" priority={priority}>
+                               <Sparkles size={16} className="text-white dark:text-black/60" />
+                               <span className="text-white dark:text-black">{editingTask ? 'Save Changes' : 'Create Task'}</span>
+                            </LiquidButton>
                         </div>
-
-                        <CategorySelector category={category} onSelect={handleCategorySelect} />
-
-                        <LiquidButton type="submit" priority={priority}>
-                           <Sparkles size={16} className="text-white dark:text-black/60" />
-                           <span className="text-white dark:text-black">{editingTask ? 'Save Changes' : 'Create Task'}</span>
-                        </LiquidButton>
-                    </div>
-                </form>
+                    </form>
+                </div>
              </div>
           </motion.div>
         </>
