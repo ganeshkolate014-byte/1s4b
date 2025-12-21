@@ -110,13 +110,13 @@ export const App: React.FC = () => {
 
   return (
     <div 
-        className="relative min-h-screen px-4 sm:px-6 max-w-[500px] mx-auto flex flex-col"
+        className="relative min-h-screen px-3 sm:px-6 w-full max-w-[500px] mx-auto flex flex-col"
         style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
     >
       
       <Header isDark={isDark} toggleTheme={toggleTheme} />
 
-      <div className="space-y-6 sm:space-y-8 flex-shrink-0">
+      <div className="space-y-5 sm:space-y-8 flex-shrink-0">
         <DynamicDashboard stats={stats} />
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
