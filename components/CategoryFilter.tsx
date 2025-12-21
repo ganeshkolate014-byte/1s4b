@@ -23,7 +23,7 @@ const FilterPill = memo(({ children, icon, active, onClick }: { children: React.
         <motion.div
             layoutId="activeCategory"
             className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-full"
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
         />
     )}
     <span className="relative z-10 flex items-center gap-1.5">

@@ -112,7 +112,7 @@ const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onS
                         <motion.div
                             layoutId="priority-pill"
                             className={`absolute inset-0 rounded-[9px] shadow-sm ${theme.bg}`}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
                         />
                     )}
                     
@@ -148,7 +148,7 @@ const CategorySelector = memo(({ category, onSelect }: { category: Category, onS
                         <motion.div
                             layoutId="category-pill-modal"
                             className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-xl"
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
                         />
                     )}
                     <span className="relative z-10 flex items-center gap-2">
@@ -245,7 +245,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
             className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-[2px] z-[60]"
             style={{ willChange: 'opacity' }}
           />
@@ -253,7 +253,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5 }}
             className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70] flex flex-col justify-end"
             style={{ willChange: 'transform' }}
           >

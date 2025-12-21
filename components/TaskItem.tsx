@@ -1,6 +1,5 @@
-
 import React, { memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Task } from '../types';
 import { Calendar, Trash2 } from 'lucide-react';
 import { CATEGORY_ICONS } from '../constants';
@@ -24,14 +23,14 @@ const formatDate = (dateStr?: string) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Smooth tween transition for task entry instead of spring
-const itemVariants = {
+// Smooth tween transition for task entry with iOS-like bezier
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { 
         opacity: 1, 
         y: 0, 
         scale: 1,
-        transition: { type: "tween", ease: "easeOut", duration: 0.3 }
+        transition: { type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.4 }
     }
 };
 
@@ -45,13 +44,13 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
       initial="hidden"
       animate="visible"
       // Smooth tween for layout shifts (reordering, adding/removing items)
-      transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+      transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.4 }}
       exit={{ 
         opacity: 0, 
         scale: 0.95, 
         height: 0,
         marginBottom: 0,
-        transition: { duration: 0.2, ease: "easeOut" } 
+        transition: { type: "tween", ease: "easeOut", duration: 0.2 } 
       }}
       className="relative mb-3 group"
       style={{ willChange: 'transform, opacity, height' }}
@@ -61,7 +60,7 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
         onClick={() => onEdit(task)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.2 }}
         className={`
             relative z-10 overflow-hidden
             flex items-center gap-3 sm:gap-5 p-3.5 sm:p-5 rounded-[1.2rem]
@@ -140,7 +139,7 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
         <motion.button
             whileHover={{ scale: 1.1, rotate: 10 }}
             whileTap={{ scale: 0.9 }}
-            transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.2 }}
             onClick={(e) => {
                 e.stopPropagation();
                 onDelete(task.id);

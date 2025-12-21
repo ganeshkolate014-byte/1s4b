@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import { CloudSun, Sun, Flame } from 'lucide-react';
 import { GlassCard } from './GlassCard';
@@ -42,7 +41,7 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                     <motion.h2 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
+                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.1 }}
                         className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight leading-none transition-colors"
                     >
                         <span className="text-zinc-500 dark:text-white/60">Good</span> {timeOfDay}.
@@ -50,7 +49,7 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                     <motion.p 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
+                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.2 }}
                         className="text-[13px] font-medium text-zinc-500 dark:text-white/50 transition-colors"
                     >
                         {stats.pending === 0 && stats.total > 0 ? "You're all caught up." : "Let's make it happen."}
@@ -63,6 +62,7 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                         key={completionRate}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5 }}
                         className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter block transition-colors"
                     >
                         {completionRate}%
@@ -78,7 +78,7 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.3 }}
                     className="bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors h-20 sm:h-24"
                 >
                    <div className="flex items-center gap-2 relative z-10">
@@ -100,7 +100,7 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                 <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
+                    transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.4 }}
                     className="bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors h-20 sm:h-24"
                 >
                     <div className="flex items-center gap-2 relative z-10">
