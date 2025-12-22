@@ -1,70 +1,87 @@
 
 export const checkNotificationSupport = (): boolean => {
-  return "Notification" in window;
+  return "Notification" in window && "serviceWorker" in navigator;
+};
+
+export const registerServiceWorker = async () => {
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register("sw.js");
+      console.log("Service Worker Registered");
+      return registration;
+    } catch (error) {
+      console.error("Service Worker Registration Failed", error);
+    }
+  }
+  return null;
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (!checkNotificationSupport()) {
-    console.warn("Notifications not supported in this browser.");
+  if (!("Notification" in window)) {
+    alert("This browser does not support notifications.");
     return false;
   }
 
-  if (Notification.permission === "granted") {
-    return true;
+  let permission = Notification.permission;
+
+  if (permission !== "granted") {
+    permission = await Notification.requestPermission();
   }
 
-  if (Notification.permission !== "denied") {
-    const permission = await Notification.requestPermission();
-    return permission === "granted";
+  if (permission === "granted") {
+    await registerServiceWorker();
+    return true;
   }
 
   return false;
 };
 
-export const sendLocalNotification = (title: string, body: string) => {
-  if (!checkNotificationSupport()) return;
+export const sendLocalNotification = async (title: string, body: string) => {
+  if (Notification.permission !== "granted") {
+    return;
+  }
 
-  const trigger = () => {
-    try {
-      // Using 'any' cast for options to support mobile properties without TS errors
-      const options: any = {
-        body: body,
-        icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix", // App Icon
-        badge: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix", // Android small icon
-        tag: 'liquid-todo-notification', // Overwrites previous notifications from this app
-        renotify: true, // Plays sound/vibrate again even if tag matches
-        silent: false,
-        requireInteraction: true // Keeps it visible on desktop
-      };
-
-      // Service Worker Fallback (for Android mostly)
-      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(registration => {
-          // Check if showNotification exists on registration
-          if ('showNotification' in registration) {
-             registration.showNotification(title, options);
-          } else {
-             new Notification(title, options);
-          }
-        }).catch(() => {
-           new Notification(title, options);
-        });
-      } else {
-        // Standard Desktop/iOS Web App
-        new Notification(title, options);
+  try {
+    // 1. Try Service Worker Method (Most Reliable for Mobile/Android)
+    if ("serviceWorker" in navigator) {
+      // Ensure we have a registration
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+         registration = await registerServiceWorker();
       }
-    } catch (e) {
-      console.error("Failed to send notification:", e);
+
+      if (registration) {
+         // Wait for it to be active
+         await navigator.serviceWorker.ready;
+         
+         registration.showNotification(title, {
+            body: body,
+            icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
+            vibrate: [200, 100, 200],
+            tag: 'liquid-todo-alert',
+            renotify: true,
+            badge: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
+            requireInteraction: true
+         } as any);
+         return;
+      }
     }
-  };
 
-  if (Notification.permission === "granted") {
-    trigger();
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        trigger();
-      }
-    });
+    // 2. Fallback to Standard Notification API (Desktop)
+    new Notification(title, {
+       body: body,
+       icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
+       tag: 'liquid-todo-alert',
+       renotify: true
+    } as any);
+
+  } catch (e) {
+    console.error("Notification failed:", e);
+    // Ultimate fallback
+    try {
+        new Notification(title, { body: body });
+    } catch (err) {
+        console.error("Even fallback failed", err);
+    }
   }
 };
