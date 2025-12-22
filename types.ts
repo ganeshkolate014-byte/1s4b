@@ -11,6 +11,10 @@ export interface Task {
   priority: Priority;
   completed: boolean;
   dueDate?: string;
+  dueTime?: string; // HH:mm format
+  notificationSent?: boolean;       // For 5-min warning
+  overdueNotificationSent?: boolean; // For "Time Expired" alert
+  streakPenalized?: boolean;
   createdAt: number;
 }
 

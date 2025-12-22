@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { Plus, Command, SlidersHorizontal } from 'lucide-react';
+
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
+import { Plus, Command, SlidersHorizontal, Bell } from 'lucide-react';
 import { Task, Category, Priority } from './types';
 import { TaskModal } from './components/TaskModal';
 import { DynamicDashboard } from './components/DynamicDashboard';
@@ -7,7 +8,8 @@ import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { CategoryFilter } from './components/CategoryFilter';
 import { TaskList } from './components/TaskList';
-import { motion } from 'framer-motion';
+import { ToastContainer, ToastMessage, ToastType } from './components/Toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -15,11 +17,20 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Theme State
+  // Streak State
+  const [streak, setStreak] = useState(() => {
+      const saved = localStorage.getItem('liquid_streak');
+      return saved ? parseInt(saved) : 0;
+  });
+
+  const [lastStreakDate, setLastStreakDate] = useState(() => {
+      return localStorage.getItem('liquid_last_streak_date') || '';
+  });
+
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('theme');
-        return saved ? saved === 'dark' : true; // Default to dark
+        return saved ? saved === 'dark' : true;
     }
     return true;
   });
@@ -28,18 +39,177 @@ export const App: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  // Toast State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  // Persistence
   useEffect(() => {
     localStorage.setItem('liquid_tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // Apply Theme Class
+  useEffect(() => {
+    localStorage.setItem('liquid_streak', streak.toString());
+  }, [streak]);
+
+  useEffect(() => {
+      localStorage.setItem('liquid_last_streak_date', lastStreakDate);
+  }, [lastStreakDate]);
+
+  // STREAK LOGIC
+  useEffect(() => {
+      const checkStreakContinuity = () => {
+          const todayStr = new Date().toISOString().split('T')[0];
+          if (lastStreakDate) {
+              const lastDate = new Date(lastStreakDate);
+              const todayDate = new Date(todayStr);
+              const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+              if (diffDays > 1) {
+                  setStreak(0);
+              }
+          }
+      };
+      checkStreakContinuity();
+  }, []);
+
+  // TOAST HELPER
+  const addToast = useCallback((title: string, message: string, type: ToastType = 'info') => {
+      const id = Math.random().toString(36).substr(2, 9);
+      setToasts(prev => [...prev, { id, title, message, type }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // NOTIFICATION TRIGGER
+  const triggerNotification = useCallback((opts: { title: string, body: string, type?: ToastType }) => {
+    // 1. Always show In-App Toast (Reliable)
+    addToast(opts.title, opts.body, opts.type || 'info');
+
+    // 2. Try System Notification (Needs Permission/HTTPS)
+    if ("Notification" in window && Notification.permission === "granted") {
+        try {
+             new Notification(opts.title, {
+                body: opts.body,
+                icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
+                requireInteraction: false
+            });
+        } catch(e) { console.error("Notification trigger failed", e); }
+    }
+  }, [addToast]);
+
+  // STREAK UPDATE LOGIC
+  useEffect(() => {
+      const updateDailyStreak = () => {
+          if (tasks.length === 0) return;
+
+          const allCompleted = tasks.every(t => t.completed);
+          const todayStr = new Date().toISOString().split('T')[0];
+
+          if (allCompleted) {
+              if (lastStreakDate !== todayStr) {
+                  setStreak(prev => prev + 1);
+                  setLastStreakDate(todayStr);
+                  triggerNotification({ title: "🔥 Streak Increased!", body: "All tasks done! Keep the fire burning!", type: 'success' });
+              }
+          } else {
+              if (lastStreakDate === todayStr) {
+                  setStreak(prev => Math.max(0, prev - 1));
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  setLastStreakDate(yesterday.toISOString().split('T')[0]);
+              }
+          }
+      };
+      updateDailyStreak();
+  }, [tasks, lastStreakDate, triggerNotification]); 
+
+  // DEADLINE LOGIC
+  useEffect(() => {
+    const checkDeadlines = () => {
+      const now = new Date();
+      let updated = false;
+
+      const newTasks = tasks.map(task => {
+        if (!task.dueDate || !task.dueTime || task.completed) return task;
+
+        const [hours, minutes] = task.dueTime.split(':').map(Number);
+        const deadline = new Date(task.dueDate);
+        deadline.setHours(hours, minutes, 0, 0);
+
+        const diffMs = deadline.getTime() - now.getTime();
+        const diffMins = diffMs / (1000 * 60);
+
+        // CASE 1: 5-Minute Warning
+        if (diffMins > 0 && diffMins <= 5 && !task.notificationSent) {
+            triggerNotification({ 
+                title: "⏳ Hurry Up!", 
+                body: `"${task.title}" is due in 5 minutes!`,
+                type: 'warning'
+            });
+            updated = true;
+            return { ...task, notificationSent: true };
+        }
+
+        // CASE 2: Overdue (Time Expired)
+        if (diffMs < 0 && !task.overdueNotificationSent) {
+             triggerNotification({ 
+                title: "⏰ Time's Up!", 
+                body: `You missed the deadline for "${task.title}".`,
+                type: 'error'
+            });
+            updated = true;
+            return { ...task, overdueNotificationSent: true };
+        }
+
+        return task;
+      });
+
+      if (updated) {
+        setTasks(newTasks);
+      }
+    };
+
+    const interval = setInterval(checkDeadlines, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [tasks, triggerNotification]);
+
+  const handleTestNotification = useCallback(async () => {
+      // 1. Show Toast immediately to prove app is working
+      addToast("🔔 Test Alert", "This is an in-app toast! System notification coming next...", 'info');
+
+      if (!("Notification" in window)) {
+          setTimeout(() => addToast("Error", "System notifications not supported by this browser.", 'error'), 1000);
+          return;
+      }
+
+      let permission = Notification.permission;
+      if (permission === "default") {
+          permission = await Notification.requestPermission();
+      }
+
+      if (permission === "granted") {
+          try {
+              new Notification("🔔 System Notification", {
+                  body: "System notifications are active!",
+                  icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+              });
+          } catch (e) {
+              setTimeout(() => addToast("System Blocked", "Browser blocked the system popup. Check 'Focus Mode'.", 'warning'), 1500);
+          }
+      } else {
+          setTimeout(() => addToast("Permission Denied", "System notifications blocked. Enable them in URL bar settings.", 'error'), 1500);
+      }
+  }, [addToast]);
+
   useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
         root.classList.add('dark');
         localStorage.setItem('theme', 'dark');
-        // Update meta theme color for mobile browsers
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
     } else {
         root.classList.remove('dark');
@@ -69,7 +239,12 @@ export const App: React.FC = () => {
   }, [tasks]);
 
   const toggleTask = useCallback((id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    setTasks(prev => prev.map(t => {
+        if (t.id === id) {
+            return { ...t, completed: !t.completed };
+        }
+        return t;
+    }));
   }, []);
 
   const deleteTask = useCallback((id: string) => {
@@ -79,7 +254,7 @@ export const App: React.FC = () => {
   const handleSave = useCallback((taskData: Partial<Task>) => {
       setTasks(prevTasks => {
           if (editingTask) {
-              return prevTasks.map(t => t.id === editingTask.id ? { ...t, ...taskData } as Task : t);
+              return prevTasks.map(t => t.id === editingTask.id ? { ...t, ...taskData, notificationSent: false, overdueNotificationSent: false } as Task : t);
           } else {
               const newTask: Task = {
                 id: Math.random().toString(36).substr(2, 9),
@@ -89,12 +264,20 @@ export const App: React.FC = () => {
                 priority: taskData.priority as Priority,
                 completed: false,
                 dueDate: taskData.dueDate,
+                dueTime: taskData.dueTime,
+                notificationSent: false,
+                overdueNotificationSent: false,
+                streakPenalized: false,
                 createdAt: Date.now(),
               };
               return [newTask, ...prevTasks];
           }
       });
       setEditingTask(null);
+
+      if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+      }
   }, [editingTask]);
 
   const handleCreateOpen = useCallback(() => {
@@ -112,14 +295,17 @@ export const App: React.FC = () => {
         className="relative min-h-screen px-3 sm:px-6 w-full max-w-[500px] mx-auto flex flex-col"
         style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
     >
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
       
-      <Header isDark={isDark} toggleTheme={toggleTheme} />
+      <Header 
+        isDark={isDark} 
+        toggleTheme={toggleTheme} 
+        onTestNotification={handleTestNotification}
+      />
 
       <div className="space-y-5 sm:space-y-8 flex-shrink-0">
-        <DynamicDashboard stats={stats} />
-
+        <DynamicDashboard stats={stats} streak={streak} />
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
         <CategoryFilter selected={filterCategory} onSelect={setFilterCategory} />
       </div>
 
@@ -130,14 +316,12 @@ export const App: React.FC = () => {
         onEdit={setEditingTask} 
       />
 
-      {/* Floating Dock */}
       <div 
         className="fixed left-0 right-0 flex justify-center z-50 pointer-events-none"
         style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
       >
         <div className="pointer-events-auto flex items-center gap-2 p-2 liquid-glass-heavy rounded-[2rem] shadow-xl shadow-black/10 dark:shadow-black/50 backdrop-blur-2xl transition-colors duration-300">
             <DockIcon icon={<SlidersHorizontal size={20} />} />
-            
             <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -147,7 +331,6 @@ export const App: React.FC = () => {
             >
                 <Plus size={28} strokeWidth={2.5} className="relative z-10" />
             </motion.button>
-            
             <DockIcon icon={<Command size={20} />} />
         </div>
       </div>
