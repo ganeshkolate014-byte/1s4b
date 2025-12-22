@@ -8,6 +8,7 @@ import { SearchBar } from './components/SearchBar';
 import { CategoryFilter } from './components/CategoryFilter';
 import { TaskList } from './components/TaskList';
 import { motion, AnimatePresence } from 'framer-motion';
+import { sendLocalNotification, requestNotificationPermission, checkNotificationSupport } from './utils/notificationManager';
 
 export const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -69,42 +70,6 @@ export const App: React.FC = () => {
       checkStreakContinuity();
   }, []);
 
-  // SYSTEM NOTIFICATION TRIGGER
-  const triggerNotification = useCallback((opts: { title: string, body: string }) => {
-    if (!("Notification" in window)) {
-        console.warn("This browser does not support desktop notification");
-        return;
-    }
-
-    if (Notification.permission === "granted") {
-        try {
-            // Using ServiceWorker registration if available for mobile support, or fallback to new Notification
-            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification(opts.title, {
-                        body: opts.body,
-                        icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
-                    });
-                });
-            } else {
-                new Notification(opts.title, {
-                    body: opts.body,
-                    icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
-                });
-            }
-        } catch(e) { console.error("Notification trigger failed", e); }
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-                new Notification(opts.title, {
-                    body: opts.body,
-                    icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
-                });
-            }
-        });
-    }
-  }, []);
-
   // STREAK UPDATE LOGIC
   useEffect(() => {
       const updateDailyStreak = () => {
@@ -117,7 +82,7 @@ export const App: React.FC = () => {
               if (lastStreakDate !== todayStr) {
                   setStreak(prev => prev + 1);
                   setLastStreakDate(todayStr);
-                  triggerNotification({ title: "🔥 Streak Increased!", body: "All tasks done! Keep the fire burning!" });
+                  sendLocalNotification("🔥 Streak Increased!", "All tasks done! Keep the fire burning!");
               }
           } else {
               if (lastStreakDate === todayStr) {
@@ -129,7 +94,7 @@ export const App: React.FC = () => {
           }
       };
       updateDailyStreak();
-  }, [tasks, lastStreakDate, triggerNotification]); 
+  }, [tasks, lastStreakDate]); 
 
   // DEADLINE LOGIC
   useEffect(() => {
@@ -140,32 +105,24 @@ export const App: React.FC = () => {
       const newTasks = tasks.map(task => {
         if (!task.dueDate || !task.dueTime || task.completed) return task;
 
-        // PRECISE DATE PARSING (Local Time)
         const [year, month, day] = task.dueDate.split('-').map(Number);
         const [hours, minutes] = task.dueTime.split(':').map(Number);
         
-        // Create date object for the deadline in LOCAL time
         const deadline = new Date(year, month - 1, day, hours, minutes, 0);
 
         const diffMs = deadline.getTime() - now.getTime();
         const diffMins = diffMs / (1000 * 60);
 
-        // CASE 1: 5-Minute Warning (0 < remaining <= 5)
+        // CASE 1: 5-Minute Warning
         if (diffMins > 0 && diffMins <= 5 && !task.notificationSent) {
-            triggerNotification({ 
-                title: "⏳ Hurry Up!", 
-                body: `"${task.title}" is due in 5 minutes!`
-            });
+            sendLocalNotification("⏳ Hurry Up!", `"${task.title}" is due in 5 minutes!`);
             updated = true;
             return { ...task, notificationSent: true };
         }
 
-        // CASE 2: Overdue (Time Passed)
+        // CASE 2: Overdue
         if (diffMs < 0 && !task.overdueNotificationSent) {
-             triggerNotification({ 
-                title: "⏰ Time's Up!", 
-                body: `You missed the deadline for "${task.title}".`
-            });
+            sendLocalNotification("⏰ Time's Up!", `You missed the deadline for "${task.title}".`);
             updated = true;
             return { ...task, overdueNotificationSent: true };
         }
@@ -178,27 +135,19 @@ export const App: React.FC = () => {
       }
     };
 
-    const interval = setInterval(checkDeadlines, 5000); // Check every 5 seconds
+    const interval = setInterval(checkDeadlines, 5000); 
     return () => clearInterval(interval);
-  }, [tasks, triggerNotification]);
+  }, [tasks]);
 
+  // MANUAL TEST TRIGGER
   const handleTestNotification = useCallback(async () => {
-      if (!("Notification" in window)) {
-          alert("This browser does not support system notifications.");
-          return;
-      }
-
-      let permission = Notification.permission;
-      if (permission === "default") {
-          permission = await Notification.requestPermission();
-      }
-
-      if (permission === "granted") {
-          triggerNotification({ title: "🔔 Test Notification", body: "System notifications are active and working!" });
+      const granted = await requestNotificationPermission();
+      if (granted) {
+          sendLocalNotification("🔔 Success!", "Notifications are active!");
       } else {
-          alert("Notifications are blocked. Please enable them in your browser settings.");
+          alert("Please enable notifications in your browser settings.");
       }
-  }, [triggerNotification]);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -270,10 +219,8 @@ export const App: React.FC = () => {
       });
       setEditingTask(null);
 
-      // Request permission on first task creation if needed
-      if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission();
-      }
+      // Try to get permission when a user interacts by saving a task
+      requestNotificationPermission();
   }, [editingTask]);
 
   const handleCreateOpen = useCallback(() => {
