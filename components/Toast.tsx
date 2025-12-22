@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
@@ -18,7 +19,10 @@ interface ToastProps {
 
 export const ToastContainer: React.FC<ToastProps> = ({ toasts, removeToast }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] pointer-events-none flex flex-col items-center gap-2 px-4 pt-safe">
+    <div 
+        className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none flex flex-col items-center gap-2 px-4"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)' }}
+    >
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
@@ -45,7 +49,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
         <motion.div
             layout
             initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 16, scale: 1 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: -20, transition: { duration: 0.2 } }}
             className="pointer-events-auto w-full max-w-[360px] liquid-glass-heavy bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-xl p-4 rounded-[1.2rem] shadow-2xl shadow-black/20 flex items-start gap-3.5 border border-black/5 dark:border-white/10"
         >
