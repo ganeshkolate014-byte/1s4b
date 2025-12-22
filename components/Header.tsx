@@ -1,13 +1,14 @@
 
 import React, { memo } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Bell } from 'lucide-react';
 
 interface HeaderProps {
     isDark: boolean;
     toggleTheme: () => void;
+    onTestNotification: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = memo(({ isDark, toggleTheme }) => {
+export const Header: React.FC<HeaderProps> = memo(({ isDark, toggleTheme, onTestNotification }) => {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
@@ -21,12 +22,23 @@ export const Header: React.FC<HeaderProps> = memo(({ isDark, toggleTheme }) => {
                 <h1 className="text-[13px] font-bold text-zinc-900 dark:text-white/90 uppercase tracking-widest leading-none transition-colors">{today}</h1>
             </div>
         </div>
-        <button 
-            onClick={toggleTheme}
-            className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center text-zinc-500 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
-        >
-            {isDark ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
+        
+        <div className="flex items-center gap-2">
+            <button 
+                onClick={onTestNotification}
+                className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center text-zinc-500 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
+                title="Test Notification"
+            >
+                <Bell size={20} />
+            </button>
+            
+            <button 
+                onClick={toggleTheme}
+                className="w-11 h-11 rounded-full liquid-glass flex items-center justify-center text-zinc-500 dark:text-white/60 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-95"
+            >
+                {isDark ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+        </div>
     </header>
   );
 });

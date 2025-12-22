@@ -13,8 +13,6 @@ interface TaskModalProps {
   editingTask: Task | null;
 }
 
-// --- MEMOIZED COMPONENTS FOR PERFORMANCE ---
-
 const PRIORITY_THEME = {
     low: { bg: 'bg-sky-500', text: 'text-white', icon: 'text-white' },
     medium: { bg: 'bg-amber-500', text: 'text-black', icon: 'text-black' },
@@ -27,9 +25,30 @@ const priorityConfig = {
     high: { label: 'Critical', icon: <AlertCircle size={14} /> }
 };
 
+const weekdayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+
+const DateItem = memo(({ date, isSelected, onSelect }: any) => (
+    <button
+        type="button"
+        onClick={() => onSelect(date.full)}
+        className={`
+            flex flex-col items-center justify-center min-w-[56px] h-[72px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
+            ${isSelected 
+                ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
+                : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1]'}
+        `}
+    >
+        <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
+            {date.isToday ? 'TDY' : date.dayName}
+        </span>
+        <span className="text-lg font-bold leading-none">
+            {date.dayNum}
+        </span>
+    </button>
+));
+
 const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDateDisplay }: any) => (
     <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mask-linear-fade px-1">
-        {/* Native Picker Button */}
         <div className="relative flex-shrink-0">
             <input 
                 type="date"
@@ -67,30 +86,14 @@ const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDat
             </button>
         </div>
 
-        {/* Quick Select List */}
-        {days.map((date: any) => {
-            const isSelected = selectedDate === date.full;
-            return (
-                <button
-                    key={date.full}
-                    type="button"
-                    onClick={() => onSelect(date.full)}
-                    className={`
-                        flex flex-col items-center justify-center min-w-[56px] h-[72px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
-                        ${isSelected 
-                            ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
-                            : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1]'}
-                    `}
-                >
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
-                        {date.isToday ? 'TDY' : date.dayName}
-                    </span>
-                    <span className="text-lg font-bold leading-none">
-                        {date.dayNum}
-                    </span>
-                </button>
-            );
-        })}
+        {days.map((date: any) => (
+            <DateItem 
+                key={date.full} 
+                date={date} 
+                isSelected={selectedDate === date.full} 
+                onSelect={onSelect} 
+            />
+        ))}
     </div>
 ));
 
@@ -167,19 +170,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
   const [category, setCategory] = useState<Category>('Personal');
   const [priority, setPriority] = useState<Priority>('medium');
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('12:00');
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const nextDays = useMemo(() => Array.from({ length: 30 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return {
-      full: d.toISOString().split('T')[0],
-      dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
-      dayNum: d.getDate(),
-      isToday: i === 0
-    };
-  }), []);
+  const nextDays = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        days.push({
+            full: d.toISOString().split('T')[0],
+            dayName: i === 0 ? 'TDY' : weekdayFormatter.format(d),
+            dayNum: d.getDate(),
+            isToday: i === 0
+        });
+    }
+    return days;
+  }, []);
 
   const isCustomDate = useMemo(() => {
       if (!selectedDate) return false;
@@ -201,29 +210,36 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
   const handleCategorySelect = useCallback((c: Category) => setCategory(c), []);
 
   useEffect(() => {
-    if (editingTask) {
-      setTitle(editingTask.title);
-      setDescription(editingTask.description);
-      setCategory(editingTask.category);
-      setPriority(editingTask.priority);
-      setSelectedDate(editingTask.dueDate || nextDays[0].full);
-    } else {
-      setTitle('');
-      setDescription('');
-      setCategory('Personal');
-      setPriority('medium');
-      setSelectedDate(nextDays[0].full);
-    }
-    
-    // Reset height on open
-    if(textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
+    if (isOpen) {
+        if (editingTask) {
+          setTitle(editingTask.title);
+          setDescription(editingTask.description);
+          setCategory(editingTask.category);
+          setPriority(editingTask.priority);
+          setSelectedDate(editingTask.dueDate || nextDays[0].full);
+          setSelectedTime(editingTask.dueTime || '12:00');
+        } else {
+          setTitle('');
+          setDescription('');
+          setCategory('Personal');
+          setPriority('medium');
+          setSelectedDate(nextDays[0].full);
+          setSelectedTime('12:00');
+        }
+        
+        requestAnimationFrame(() => {
+            if(textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+                if (editingTask || title) {
+                     textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+                }
+            }
+        });
     }
   }, [editingTask, isOpen, nextDays]);
 
-  // Auto-resize textarea
   useEffect(() => {
-      if (textareaRef.current) {
+      if (textareaRef.current && isOpen) {
           textareaRef.current.style.height = 'auto';
           textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
       }
@@ -232,7 +248,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onSave({ title, description, category, priority, dueDate: selectedDate });
+    onSave({ 
+      title, 
+      description, 
+      category, 
+      priority, 
+      dueDate: selectedDate,
+      dueTime: selectedTime
+    });
     onClose();
   };
 
@@ -257,10 +280,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70] flex flex-col justify-end"
             style={{ willChange: 'transform' }}
           >
-             {/* CONTAINER */}
              <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
                 
-                {/* Header Actions - Fixed at top of modal */}
                 <div className="flex justify-between items-center p-5 pb-2 shrink-0 z-20 bg-inherit relative">
                     <button 
                         type="button"
@@ -276,11 +297,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                     </div>
                 </div>
 
-                {/* SCROLLABLE CONTENT AREA */}
                 <div className="overflow-y-auto overscroll-contain flex-1 custom-scrollbar">
                     <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
                         
-                        {/* Main Input Area */}
                         <div className="px-5 sm:px-6 py-4 space-y-3 shrink-0">
                             <textarea
                                 ref={textareaRef}
@@ -300,15 +319,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                             />
                         </div>
 
-                        {/* Controls Container - Pushes to bottom if space permits */}
                         <div 
                             className="bg-zinc-50 dark:bg-[#18181b] p-6 space-y-8 mt-auto border-t border-black/5 dark:border-white/5 relative"
                             style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
                         >
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 pl-1 flex items-center gap-2">
-                                    <Clock size={14} /> Schedule
-                                </label>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between pl-1">
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 flex items-center gap-2">
+                                        <Clock size={14} /> Schedule & Time
+                                    </label>
+                                    <div className="relative">
+                                        <input 
+                                            type="time" 
+                                            value={selectedTime}
+                                            onChange={(e) => setSelectedTime(e.target.value)}
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        />
+                                        <div className="px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 flex items-center gap-2">
+                                            <span className="text-[13px] font-bold text-zinc-800 dark:text-white/80">{selectedTime}</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <DateScroll 
                                     selectedDate={selectedDate}
@@ -323,7 +354,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
                                  <div className="flex justify-between items-center px-1">
                                     <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30">Impact Level</label>
                                  </div>
-                                 
                                  <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
                             </div>
 

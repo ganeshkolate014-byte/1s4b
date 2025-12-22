@@ -1,7 +1,8 @@
+
 import React, { memo } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { Task } from '../types';
-import { Calendar, Trash2 } from 'lucide-react';
+import { Calendar, Trash2, Clock } from 'lucide-react';
 import { CATEGORY_ICONS } from '../constants';
 
 interface TaskItemProps {
@@ -23,7 +24,6 @@ const formatDate = (dateStr?: string) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Smooth tween transition for task entry with iOS-like bezier
 const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { 
@@ -43,7 +43,6 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
       variants={itemVariants}
       initial="hidden"
       animate="visible"
-      // Smooth tween for layout shifts (reordering, adding/removing items)
       transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.4 }}
       exit={{ 
         opacity: 0, 
@@ -55,7 +54,6 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
       className="relative mb-3 group"
       style={{ willChange: 'transform, opacity, height' }}
     >
-      {/* Task Card */}
       <motion.div 
         onClick={() => onEdit(task)}
         whileHover={{ scale: 1.02 }}
@@ -70,13 +68,12 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
                 : 'bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/[0.05] hover:bg-zinc-50 dark:hover:bg-zinc-800'}
         `}
       >
-        {/* Checkbox */}
         <div 
             onClick={(e) => {
                 e.stopPropagation();
                 onToggle(task.id);
             }}
-            className="relative cursor-pointer flex-shrink-0 z-10 p-1 -m-1" // Hitbox padding
+            className="relative cursor-pointer flex-shrink-0 z-10 p-1 -m-1"
         >
             <motion.div 
                 whileTap={{ scale: 0.8 }}
@@ -94,7 +91,6 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
                    <motion.div 
                      initial={{ scale: 0 }} 
                      animate={{ scale: 1 }}
-                     // Smooth checkmark animation
                      transition={{ type: 'tween', ease: "easeOut", duration: 0.2 }}
                      className="w-2.5 h-2.5 bg-white rounded-full shadow-sm" 
                    />
@@ -121,9 +117,15 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
              </span>
              
              {!task.completed && dateDisplay && (
-                 <div className="flex items-center gap-1 text-zinc-500 dark:text-white/50 bg-zinc-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-white/5">
-                    <Calendar size={12} />
-                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">{dateDisplay}</span>
+                 <div className="flex items-center gap-2 text-zinc-500 dark:text-white/50 bg-zinc-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-white/5">
+                    <div className="flex items-center gap-1 border-r border-zinc-300 dark:border-white/10 pr-1.5">
+                        <Calendar size={12} />
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">{dateDisplay}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Clock size={12} />
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">{task.dueTime}</span>
+                    </div>
                  </div>
              )}
 
@@ -135,7 +137,6 @@ export const TaskItem: React.FC<TaskItemProps> = memo(({ task, onToggle, onDelet
           </div>
         </div>
 
-        {/* Delete Button */}
         <motion.button
             whileHover={{ scale: 1.1, rotate: 10 }}
             whileTap={{ scale: 0.9 }}

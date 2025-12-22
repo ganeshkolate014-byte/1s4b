@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, memo } from 'react';
 import { CloudSun, Sun, Flame } from 'lucide-react';
 import { GlassCard } from './GlassCard';
@@ -10,9 +11,10 @@ interface DynamicDashboardProps {
     pending: number;
     highPriority: number;
   };
+  streak?: number;
 }
 
-export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }) => {
+export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats, streak = 0 }) => {
   const completionRate = stats.total === 0 ? 0 : Math.round((stats.completed / stats.total) * 100);
 
   // Time State for Clock and Greeting
@@ -28,9 +30,6 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
   if (hour >= 12 && hour < 17) timeOfDay = 'Afternoon';
   else if (hour >= 17 && hour < 22) timeOfDay = 'Evening';
   else if (hour >= 22 || hour < 5) timeOfDay = 'Night';
-
-  // Mock Streak Data
-  const streakDays = 5;
 
   return (
     <GlassCard className="w-full mb-5 !p-0">
@@ -82,16 +81,41 @@ export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats }
                     className="bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors h-20 sm:h-24"
                 >
                    <div className="flex items-center gap-2 relative z-10">
-                        <Flame size={14} className="text-orange-500 dark:text-orange-400 sm:w-4 sm:h-4" />
+                        <motion.div
+                            animate={{ 
+                                scale: [1, 1.2, 1.1, 1.25, 1],
+                                rotate: [-2, 2, -1, 3, -2],
+                                y: [0, -2, 1, -1, 0],
+                                filter: [
+                                    "drop-shadow(0 0 2px rgba(249, 115, 22, 0.3))",
+                                    "drop-shadow(0 0 8px rgba(249, 115, 22, 0.6))",
+                                    "drop-shadow(0 0 4px rgba(234, 179, 8, 0.4))",
+                                    "drop-shadow(0 0 2px rgba(249, 115, 22, 0.3))"
+                                ]
+                            }}
+                            transition={{ 
+                                duration: 2, 
+                                repeat: Infinity, 
+                                ease: "easeInOut",
+                                times: [0, 0.25, 0.5, 0.75, 1]
+                            }}
+                        >
+                            <Flame 
+                                size={16} 
+                                className="text-orange-500 dark:text-orange-400 sm:w-5 sm:h-5" 
+                                fill="currentColor" 
+                                fillOpacity={0.6}
+                            />
+                        </motion.div>
                         <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/50">Streak</span>
                    </div>
                    
                    <div className="relative z-10">
                        <span className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white block flex items-center gap-2">
-                           {streakDays} Days
+                           {streak} {streak === 1 ? 'Day' : 'Days'}
                        </span>
                        <span className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-white/40 font-medium block mt-0.5 truncate">
-                           Keep it up.
+                           Keep it burning.
                        </span>
                    </div>
                 </motion.div>
