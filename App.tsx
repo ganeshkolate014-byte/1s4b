@@ -8,7 +8,7 @@ import { SearchBar } from './components/SearchBar';
 import { CategoryFilter } from './components/CategoryFilter';
 import { TaskList } from './components/TaskList';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sendLocalNotification, requestNotificationPermission, checkNotificationSupport } from './utils/notificationManager';
+import { sendLocalNotification, requestNotificationPermission, registerServiceWorker } from './utils/notificationManager';
 
 export const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -38,6 +38,11 @@ export const App: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Initialize Service Worker on Mount
+  useEffect(() => {
+      registerServiceWorker();
+  }, []);
 
   // Persistence
   useEffect(() => {
@@ -143,7 +148,7 @@ export const App: React.FC = () => {
   const handleTestNotification = useCallback(async () => {
       const granted = await requestNotificationPermission();
       if (granted) {
-          sendLocalNotification("🔔 Success!", "Notifications are active!");
+          sendLocalNotification("🔔 Success!", "Notifications are working via Service Worker!");
       } else {
           alert("Please enable notifications in your browser settings.");
       }
@@ -219,7 +224,7 @@ export const App: React.FC = () => {
       });
       setEditingTask(null);
 
-      // Try to get permission when a user interacts by saving a task
+      // Opportunistically request permission
       requestNotificationPermission();
   }, [editingTask]);
 
