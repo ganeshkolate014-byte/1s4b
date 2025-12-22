@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { Plus, Command, SlidersHorizontal, Bell } from 'lucide-react';
 import { Task, Category, Priority } from './types';
@@ -8,7 +7,6 @@ import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { CategoryFilter } from './components/CategoryFilter';
 import { TaskList } from './components/TaskList';
-import { ToastContainer, ToastMessage, ToastType } from './components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const App: React.FC = () => {
@@ -39,9 +37,6 @@ export const App: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  
-  // Toast State
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Persistence
   useEffect(() => {
@@ -74,32 +69,41 @@ export const App: React.FC = () => {
       checkStreakContinuity();
   }, []);
 
-  // TOAST HELPER
-  const addToast = useCallback((title: string, message: string, type: ToastType = 'info') => {
-      const id = Math.random().toString(36).substr(2, 9);
-      setToasts(prev => [...prev, { id, title, message, type }]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  // NOTIFICATION TRIGGER
-  const triggerNotification = useCallback((opts: { title: string, body: string, type?: ToastType }) => {
-    // 1. Always show In-App Toast (Reliable)
-    addToast(opts.title, opts.body, opts.type || 'info');
-
-    // 2. Try System Notification (Needs Permission/HTTPS)
-    if ("Notification" in window && Notification.permission === "granted") {
-        try {
-             new Notification(opts.title, {
-                body: opts.body,
-                icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
-                requireInteraction: false
-            });
-        } catch(e) { console.error("Notification trigger failed", e); }
+  // SYSTEM NOTIFICATION TRIGGER
+  const triggerNotification = useCallback((opts: { title: string, body: string }) => {
+    if (!("Notification" in window)) {
+        console.warn("This browser does not support desktop notification");
+        return;
     }
-  }, [addToast]);
+
+    if (Notification.permission === "granted") {
+        try {
+            // Using ServiceWorker registration if available for mobile support, or fallback to new Notification
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(opts.title, {
+                        body: opts.body,
+                        icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+                    });
+                });
+            } else {
+                new Notification(opts.title, {
+                    body: opts.body,
+                    icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+                });
+            }
+        } catch(e) { console.error("Notification trigger failed", e); }
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+                new Notification(opts.title, {
+                    body: opts.body,
+                    icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+                });
+            }
+        });
+    }
+  }, []);
 
   // STREAK UPDATE LOGIC
   useEffect(() => {
@@ -113,7 +117,7 @@ export const App: React.FC = () => {
               if (lastStreakDate !== todayStr) {
                   setStreak(prev => prev + 1);
                   setLastStreakDate(todayStr);
-                  triggerNotification({ title: "🔥 Streak Increased!", body: "All tasks done! Keep the fire burning!", type: 'success' });
+                  triggerNotification({ title: "🔥 Streak Increased!", body: "All tasks done! Keep the fire burning!" });
               }
           } else {
               if (lastStreakDate === todayStr) {
@@ -136,30 +140,31 @@ export const App: React.FC = () => {
       const newTasks = tasks.map(task => {
         if (!task.dueDate || !task.dueTime || task.completed) return task;
 
+        // PRECISE DATE PARSING (Local Time)
+        const [year, month, day] = task.dueDate.split('-').map(Number);
         const [hours, minutes] = task.dueTime.split(':').map(Number);
-        const deadline = new Date(task.dueDate);
-        deadline.setHours(hours, minutes, 0, 0);
+        
+        // Create date object for the deadline in LOCAL time
+        const deadline = new Date(year, month - 1, day, hours, minutes, 0);
 
         const diffMs = deadline.getTime() - now.getTime();
         const diffMins = diffMs / (1000 * 60);
 
-        // CASE 1: 5-Minute Warning
+        // CASE 1: 5-Minute Warning (0 < remaining <= 5)
         if (diffMins > 0 && diffMins <= 5 && !task.notificationSent) {
             triggerNotification({ 
                 title: "⏳ Hurry Up!", 
-                body: `"${task.title}" is due in 5 minutes!`,
-                type: 'warning'
+                body: `"${task.title}" is due in 5 minutes!`
             });
             updated = true;
             return { ...task, notificationSent: true };
         }
 
-        // CASE 2: Overdue (Time Expired)
+        // CASE 2: Overdue (Time Passed)
         if (diffMs < 0 && !task.overdueNotificationSent) {
              triggerNotification({ 
                 title: "⏰ Time's Up!", 
-                body: `You missed the deadline for "${task.title}".`,
-                type: 'error'
+                body: `You missed the deadline for "${task.title}".`
             });
             updated = true;
             return { ...task, overdueNotificationSent: true };
@@ -178,11 +183,8 @@ export const App: React.FC = () => {
   }, [tasks, triggerNotification]);
 
   const handleTestNotification = useCallback(async () => {
-      // 1. Show Toast immediately to prove app is working
-      addToast("🔔 Test Alert", "This is an in-app toast! System notification coming next...", 'info');
-
       if (!("Notification" in window)) {
-          setTimeout(() => addToast("Error", "System notifications not supported by this browser.", 'error'), 1000);
+          alert("This browser does not support system notifications.");
           return;
       }
 
@@ -192,18 +194,11 @@ export const App: React.FC = () => {
       }
 
       if (permission === "granted") {
-          try {
-              new Notification("🔔 System Notification", {
-                  body: "System notifications are active!",
-                  icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
-              });
-          } catch (e) {
-              setTimeout(() => addToast("System Blocked", "Browser blocked the system popup. Check 'Focus Mode'.", 'warning'), 1500);
-          }
+          triggerNotification({ title: "🔔 Test Notification", body: "System notifications are active and working!" });
       } else {
-          setTimeout(() => addToast("Permission Denied", "System notifications blocked. Enable them in URL bar settings.", 'error'), 1500);
+          alert("Notifications are blocked. Please enable them in your browser settings.");
       }
-  }, [addToast]);
+  }, [triggerNotification]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -275,6 +270,7 @@ export const App: React.FC = () => {
       });
       setEditingTask(null);
 
+      // Request permission on first task creation if needed
       if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission();
       }
@@ -295,8 +291,6 @@ export const App: React.FC = () => {
         className="relative min-h-screen px-3 sm:px-6 w-full max-w-[500px] mx-auto flex flex-col"
         style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
     >
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-      
       <Header 
         isDark={isDark} 
         toggleTheme={toggleTheme} 
