@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { CATEGORIES, CATEGORY_ICONS } from '../constants';
@@ -9,50 +8,44 @@ interface CategoryFilterProps {
     onSelect: (cat: Category | 'All') => void;
 }
 
-const FilterPill = memo(({ children, icon, active, onClick }: { children: React.ReactNode, icon?: React.ReactNode, active: boolean, onClick: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`
-        relative px-4 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 whitespace-nowrap flex-shrink-0 border flex items-center gap-2
-        ${active 
-            ? 'text-white dark:text-black border-transparent z-10' 
-            : 'bg-black/5 border-black/5 text-zinc-500 hover:bg-black/10 hover:text-black dark:bg-white/5 dark:border-white/10 dark:text-white/50 dark:hover:bg-white/10 dark:hover:text-white'}
-    `}
-  >
-    {active && (
-        <motion.div
-            layoutId="activeCategory"
-            className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-full"
-            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
-        />
-    )}
-    <span className="relative z-10 flex items-center gap-1.5">
-        {icon && <span className="opacity-70">{icon}</span>}
-        {children}
-    </span>
-  </button>
-));
-
 export const CategoryFilter: React.FC<CategoryFilterProps> = memo(({ selected, onSelect }) => {
+    const allCategories: (Category | 'All')[] = ['All', ...CATEGORIES];
+
     return (
-        <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-4 pt-1 px-1 mask-linear-fade">
-            <FilterPill 
-                active={selected === 'All'} 
-                onClick={() => onSelect('All')}
-                icon={CATEGORY_ICONS['All']}
+        <div className="w-full">
+            <div 
+                className="relative flex items-center overflow-x-auto no-scrollbar py-2"
             >
-                All
-            </FilterPill>
-            {CATEGORIES.map(cat => (
-                <FilterPill 
-                    key={cat} 
-                    active={selected === cat} 
-                    onClick={() => onSelect(cat)}
-                    icon={CATEGORY_ICONS[cat]}
-                >
-                    {cat}
-                </FilterPill>
-            ))}
+                {allCategories.map((cat) => {
+                    const isActive = selected === cat;
+                    return (
+                        <button
+                            key={cat}
+                            onClick={() => onSelect(cat)}
+                            className={`
+                                relative min-w-[fit-content] px-4 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-colors duration-300 z-10 shrink-0 flex items-center justify-center gap-2
+                                ${isActive ? 'text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'}
+                            `}
+                        >
+                            {isActive && (
+                                <motion.div
+                                    layoutId="activeFilter"
+                                    className="absolute inset-0 bg-zinc-800 dark:bg-zinc-700 rounded-full"
+                                    transition={{ 
+                                        type: "tween", 
+                                        duration: 0.3,
+                                        ease: "easeInOut"
+                                    }}
+                                />
+                            )}
+                            <span className="relative z-10 flex items-center gap-2">
+                                {CATEGORY_ICONS[cat] && React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 16 })}
+                                {cat}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 });

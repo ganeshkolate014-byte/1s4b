@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { GlassCard } from './GlassCard';
 import { Zap, Shield, Sparkles } from 'lucide-react';
 
 interface OnboardingProps {
@@ -10,13 +8,13 @@ interface OnboardingProps {
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/70">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="max-w-sm w-full"
       >
-        <GlassCard className="p-8 text-center bg-white/10">
+        <div className="p-8 text-center bg-zinc-900 rounded-3xl border border-zinc-700 shadow-2xl">
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center">
               <Sparkles size={40} className="text-white" />
@@ -52,7 +50,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           >
             Get Started
           </button>
-        </GlassCard>
+        </div>
       </motion.div>
     </div>
   );

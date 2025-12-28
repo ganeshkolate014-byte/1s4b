@@ -1,150 +1,217 @@
-
-import React, { useState, useEffect, memo } from 'react';
-import { CloudSun, Sun, Flame } from 'lucide-react';
-import { GlassCard } from './GlassCard';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, memo, useCallback } from 'react';
+import { Sun, Moon, Flame, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DynamicDashboardProps {
   stats: {
     total: number;
     completed: number;
-    pending: number;
-    highPriority: number;
   };
   streak?: number;
+  isDark: boolean;
 }
 
-export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats, streak = 0 }) => {
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning.";
+    if (hour < 18) return "Good Afternoon.";
+    return "Good Night.";
+};
+
+const getWeatherDescription = (code: number) => {
+    if (code === 0) return "Clear Sky";
+    if (code >= 1 && code <= 3) return "Partly Cloudy";
+    if (code >= 45 && code <= 48) return "Foggy";
+    if (code >= 51 && code <= 67) return "Rainy";
+    if (code >= 71 && code <= 77) return "Snowy";
+    if (code >= 80 && code <= 82) return "Heavy Rain";
+    if (code >= 95) return "Thunderstorm";
+    return "Clear";
+};
+
+const Widget: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
+    <div className={`bg-zinc-200 dark:bg-zinc-900 rounded-2xl p-4 flex-1 ${className}`}>
+        {children}
+    </div>
+);
+
+// Restored Complex Flame Animation
+const RealisticFlame: React.FC = () => (
+    <div className="relative w-5 h-5 flex items-center justify-center">
+        <motion.div
+            className="absolute inset-0 bg-orange-500 rounded-full"
+            animate={{ scale: [1.2, 1.5, 1.3, 1.6, 1.2], opacity: [0.2, 0.3, 0.25, 0.35, 0.2] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ filter: 'blur(6px)' }}
+        />
+        <motion.div className="absolute" animate={{ y: [0, -1.5, 0.5, -1, 0], x: [0, 0.5, -0.5, 0.5, 0], scale: [1, 1.1, 0.95, 1.15, 1], opacity: [0.7, 0.9, 0.8, 1, 0.7] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.1 }}>
+            <Flame className="text-transparent fill-red-500/80" size={16} />
+        </motion.div>
+        <motion.div className="absolute" animate={{ y: [0, -2, 1, -1.5, 0], scaleX: [1, 1.1, 0.9, 1.1, 1], scaleY: [1, 0.95, 1.05, 0.9, 1], skewX: [0, 2, -2, 3, 0] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Flame className="text-transparent fill-orange-500" size={16} />
+        </motion.div>
+        <motion.div className="absolute" animate={{ scale: [1, 0.8, 1.1, 0.9, 1] }} transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}>
+            <Flame className="text-transparent fill-yellow-400" size={12} style={{ transform: 'translateY(1px)' }}/>
+        </motion.div>
+    </div>
+);
+
+const SkeletonLoader: React.FC = () => (
+    <div className="space-y-1.5 opacity-50">
+        <div className="h-6 w-12 bg-zinc-300 dark:bg-zinc-800 rounded-md animate-pulse" />
+        <div className="h-3 w-20 bg-zinc-300 dark:bg-zinc-800 rounded-md animate-pulse" />
+    </div>
+);
+
+const WEATHER_CACHE_KEY = 'liquid_weather_cache';
+const CACHE_DURATION = 30 * 60 * 1000; 
+
+export const DynamicDashboard: React.FC<DynamicDashboardProps> = memo(({ stats, streak = 0, isDark }) => {
   const completionRate = stats.total === 0 ? 0 : Math.round((stats.completed / stats.total) * 100);
 
-  // Time State for Clock and Greeting
-  const [time, setTime] = useState(new Date());
+  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(true);
+  const [weatherError, setWeatherError] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 60000);
-    return () => clearInterval(timer);
+  const fetchWeather = useCallback(async (force = false) => {
+    if (!force) {
+        try {
+            const cached = localStorage.getItem(WEATHER_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < CACHE_DURATION) {
+                    setWeather(data);
+                    setLoadingWeather(false);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn("Cache read failed", e);
+        }
+    }
+
+    setLoadingWeather(true);
+    setWeatherError(false);
+
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            try {
+                const { latitude, longitude } = position.coords;
+                
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+
+                if (!weatherRes.ok) throw new Error('API request failed');
+
+                const weatherDataRaw = await weatherRes.json();
+
+                if (weatherDataRaw.current_weather) {
+                    const finalData = {
+                        temp: Math.round(weatherDataRaw.current_weather.temperature),
+                        code: weatherDataRaw.current_weather.weathercode
+                    };
+                    setWeather(finalData);
+                    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
+                        data: finalData,
+                        timestamp: Date.now()
+                    }));
+                } else {
+                    throw new Error('Invalid weather data');
+                }
+            } catch (error) {
+                console.error(error);
+                setWeatherError(true);
+            } finally {
+                setLoadingWeather(false);
+            }
+        }, (error) => {
+            setLoadingWeather(false);
+            setWeatherError(true);
+        }, { 
+            timeout: 10000,
+            maximumAge: 600000,
+            enableHighAccuracy: false 
+        });
+    } else {
+        setLoadingWeather(false);
+        setWeatherError(true);
+    }
   }, []);
 
-  const hour = time.getHours();
-  let timeOfDay = 'Morning';
-  if (hour >= 12 && hour < 17) timeOfDay = 'Afternoon';
-  else if (hour >= 17 && hour < 22) timeOfDay = 'Evening';
-  else if (hour >= 22 || hour < 5) timeOfDay = 'Night';
+  useEffect(() => {
+    fetchWeather();
+  }, [fetchWeather]);
+
+  const isNight = new Date().getHours() >= 18 || new Date().getHours() < 6;
 
   return (
-    <GlassCard className="w-full mb-5 !p-0">
-        <div className="relative p-5 sm:p-7 overflow-hidden group">
-            
-            <div className="relative z-10 flex justify-between items-end mb-6 sm:mb-8 gap-2">
-                <div className="flex flex-col gap-1">
-                    <motion.h2 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.1 }}
-                        className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight leading-none transition-colors"
-                    >
-                        <span className="text-zinc-500 dark:text-white/60">Good</span> {timeOfDay}.
-                    </motion.h2>
-                    <motion.p 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.2 }}
-                        className="text-[13px] font-medium text-zinc-500 dark:text-white/50 transition-colors"
-                    >
-                        {stats.pending === 0 && stats.total > 0 ? "You're all caught up." : "Let's make it happen."}
-                    </motion.p>
-                </div>
-
-                {/* Minimal Percentage Display */}
-                <div className="text-right shrink-0">
-                    <motion.span 
-                        key={completionRate}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5 }}
-                        className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white tracking-tighter block transition-colors"
-                    >
-                        {completionRate}%
-                    </motion.span>
-                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/40 transition-colors">Done</span>
-                </div>
+    <div className="w-full bg-zinc-100 dark:bg-[#1c1c1e] rounded-3xl p-5 sm:p-6 transition-colors duration-300">
+        <div className="flex justify-between items-start">
+            <div>
+                <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">{getGreeting()}</h2>
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium">Let's make it happen.</p>
             </div>
-
-            {/* Widgets Row */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                
-                {/* Widget 1: Streak */}
-                <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.3 }}
-                    className="bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors h-20 sm:h-24"
-                >
-                   <div className="flex items-center gap-2 relative z-10">
-                        <motion.div
-                            animate={{ 
-                                scale: [1, 1.2, 1.1, 1.25, 1],
-                                rotate: [-2, 2, -1, 3, -2],
-                                y: [0, -2, 1, -1, 0],
-                                filter: [
-                                    "drop-shadow(0 0 2px rgba(249, 115, 22, 0.3))",
-                                    "drop-shadow(0 0 8px rgba(249, 115, 22, 0.6))",
-                                    "drop-shadow(0 0 4px rgba(234, 179, 8, 0.4))",
-                                    "drop-shadow(0 0 2px rgba(249, 115, 22, 0.3))"
-                                ]
-                            }}
-                            transition={{ 
-                                duration: 2, 
-                                repeat: Infinity, 
-                                ease: "easeInOut",
-                                times: [0, 0.25, 0.5, 0.75, 1]
-                            }}
-                        >
-                            <Flame 
-                                size={16} 
-                                className="text-orange-500 dark:text-orange-400 sm:w-5 sm:h-5" 
-                                fill="currentColor" 
-                                fillOpacity={0.6}
-                            />
-                        </motion.div>
-                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/50">Streak</span>
-                   </div>
-                   
-                   <div className="relative z-10">
-                       <span className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white block flex items-center gap-2">
-                           {streak} {streak === 1 ? 'Day' : 'Days'}
-                       </span>
-                       <span className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-white/40 font-medium block mt-0.5 truncate">
-                           Keep it burning.
-                       </span>
-                   </div>
-                </motion.div>
-
-                {/* Widget 2: Weather */}
-                <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5, delay: 0.4 }}
-                    className="bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden transition-colors h-20 sm:h-24"
-                >
-                    <div className="flex items-center gap-2 relative z-10">
-                        <CloudSun size={14} className="text-amber-500 dark:text-yellow-400 sm:w-4 sm:h-4" />
-                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/50">
-                            Now
-                        </span>
-                    </div>
-                    
-                    <div className="flex items-end justify-between relative z-10">
-                       <div>
-                           <span className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white block">24°</span>
-                           <span className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-white/40 font-medium">Clear Sky</span>
-                       </div>
-                       <Sun size={18} className="text-amber-500 dark:text-yellow-400 mb-0.5 sm:w-5 sm:h-5" />
-                    </div>
-                </motion.div>
-
+            <div className="text-right">
+                <p className="text-3xl font-bold text-zinc-900 dark:text-white">{completionRate}%</p>
+                <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">DONE</p>
             </div>
         </div>
-    </GlassCard>
+        <div className="mt-4 flex gap-3 sm:gap-4">
+            <Widget>
+                <div className="flex items-center gap-2 mb-1">
+                    <RealisticFlame />
+                    <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">STREAK</span>
+                </div>
+                <p className="text-xl font-bold text-zinc-900 dark:text-white">{streak} Days</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">Keep it burning.</p>
+            </Widget>
+            <Widget>
+                 <div className="flex items-center gap-2 mb-1">
+                    {isNight ? <Moon className="text-zinc-900 dark:text-white" size={14} /> : <Sun className="text-amber-500" size={14} />}
+                    <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 tracking-wider">NOW</span>
+                </div>
+                <div className="h-12 flex flex-col justify-center relative">
+                 <AnimatePresence mode="wait">
+                 {loadingWeather ? (
+                    <motion.div 
+                        key="loader"
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <SkeletonLoader />
+                    </motion.div>
+                 ) : weatherError || !weather ? (
+                     <motion.div 
+                        key="error"
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="flex flex-col items-start justify-center"
+                     >
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Unavailable</p>
+                         <button onClick={() => fetchWeather(true)} className="flex items-center gap-1.5 text-blue-500 text-xs font-bold hover:underline">
+                             <RefreshCw size={12} />
+                             Retry
+                         </button>
+                     </motion.div>
+                 ) : (
+                    <motion.div
+                        key="weather"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        className="flex flex-col justify-end"
+                    >
+                        <p className="text-xl font-bold text-zinc-900 dark:text-white leading-none">{weather.temp}°</p>
+                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 truncate">{getWeatherDescription(weather.code)}</p>
+                    </motion.div>
+                 )}
+                 </AnimatePresence>
+                </div>
+            </Widget>
+        </div>
+    </div>
   );
 });

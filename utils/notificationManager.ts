@@ -1,19 +1,25 @@
 
 export const checkNotificationSupport = (): boolean => {
-  return "Notification" in window && "serviceWorker" in navigator;
+  return "Notification" in window;
 };
 
-export const registerServiceWorker = async () => {
-  if ("serviceWorker" in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register("sw.js");
-      console.log("Service Worker Registered");
-      return registration;
-    } catch (error) {
-      console.error("Service Worker Registration Failed", error);
-    }
+// Ensure SW is present (fallback if html script hasn't run yet)
+export const ensureServiceWorker = async () => {
+  if (!("serviceWorker" in navigator)) return null;
+
+  try {
+    // Check for existing registration first
+    let registration = await navigator.serviceWorker.getRegistration();
+    if (registration) return registration;
+
+    // Attempt registration
+    registration = await navigator.serviceWorker.register("sw.js");
+    return registration;
+  } catch (error) {
+    // Cleanly handle SecurityError or Origin mismatch in sandboxed previews
+    console.warn("Service Worker unavailable (using fallback):", error);
+    return null;
   }
-  return null;
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
@@ -22,15 +28,15 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     return false;
   }
 
-  let permission = Notification.permission;
-
-  if (permission !== "granted") {
-    permission = await Notification.requestPermission();
-  }
-
-  if (permission === "granted") {
-    await registerServiceWorker();
-    return true;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      // Try to register, but don't block if it fails
+      await ensureServiceWorker();
+      return true;
+    }
+  } catch (e) {
+    console.error("Permission request failed:", e);
   }
 
   return false;
@@ -41,47 +47,33 @@ export const sendLocalNotification = async (title: string, body: string) => {
     return;
   }
 
+  const options: any = {
+    body: body,
+    icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
+    vibrate: [200, 100, 200],
+    tag: 'liquid-todo-app',
+    renotify: true
+  };
+
   try {
-    // 1. Try Service Worker Method (Most Reliable for Mobile/Android)
+    // 1. Try Service Worker (Preferred for Mobile)
     if ("serviceWorker" in navigator) {
-      // Ensure we have a registration
-      let registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-         registration = await registerServiceWorker();
-      }
-
-      if (registration) {
-         // Wait for it to be active
-         await navigator.serviceWorker.ready;
-         
-         registration.showNotification(title, {
-            body: body,
-            icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
-            vibrate: [200, 100, 200],
-            tag: 'liquid-todo-alert',
-            renotify: true,
-            badge: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
-            requireInteraction: true
-         } as any);
-         return;
+      // We do not use .ready here because it hangs if SW fails to register in sandboxes
+      const registration = await navigator.serviceWorker.getRegistration();
+      
+      if (registration && registration.active) {
+        registration.showNotification(title, options);
+        return;
       }
     }
+  } catch (error) {
+    console.warn("SW Notification failed, falling back to standard API", error);
+  }
 
-    // 2. Fallback to Standard Notification API (Desktop)
-    new Notification(title, {
-       body: body,
-       icon: "https://api.dicebear.com/7.x/notionists/svg?seed=Felix",
-       tag: 'liquid-todo-alert',
-       renotify: true
-    } as any);
-
+  // 2. Fallback to Standard API (Desktop / Sandbox)
+  try {
+    new Notification(title, options);
   } catch (e) {
-    console.error("Notification failed:", e);
-    // Ultimate fallback
-    try {
-        new Notification(title, { body: body });
-    } catch (err) {
-        console.error("Even fallback failed", err);
-    }
+    console.error("Standard notification failed:", e);
   }
 };

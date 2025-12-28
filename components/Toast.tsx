@@ -1,7 +1,6 @@
-
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { X, Info, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 
@@ -48,10 +47,11 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, y: -20, transition: { duration: 0.2 } }}
-            className="pointer-events-auto w-full max-w-[360px] liquid-glass-heavy bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-xl p-4 rounded-[1.2rem] shadow-2xl shadow-black/20 flex items-start gap-3.5 border border-black/5 dark:border-white/10"
+            exit={{ opacity: 0, scale: 0.95, y: -20, transition: { duration: 0.2, ease: "easeIn" } }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+            className="pointer-events-auto w-full max-w-[360px] bg-white dark:bg-[#2c2c2e] p-4 rounded-[1.2rem] shadow-lg flex items-start gap-3.5 border border-zinc-200 dark:border-zinc-800"
         >
             <div className={`
                 mt-0.5 w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm
@@ -60,8 +60,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
                 ${toast.type === 'success' ? 'bg-green-500 text-white' : ''}
                 ${toast.type === 'error' ? 'bg-rose-500 text-white' : ''}
             `}>
-                {toast.type === 'info' && <Bell size={18} fill="currentColor" fillOpacity={0.2} />}
-                {toast.type === 'warning' && <Clock size={18} />}
+                {toast.type === 'info' && <Info size={18} />}
+                {toast.type === 'warning' && <AlertCircle size={18} />}
                 {toast.type === 'success' && <CheckCircle size={18} />}
                 {toast.type === 'error' && <AlertTriangle size={18} />}
             </div>

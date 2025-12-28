@@ -1,7 +1,6 @@
-
 import React, { memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { SlidersHorizontal } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import { Task } from '../types';
 import { TaskItem } from './TaskItem';
 
@@ -25,13 +24,12 @@ const listVariants = {
 export const TaskList: React.FC<TaskListProps> = memo(({ tasks, onToggle, onDelete, onEdit }) => {
     return (
         <div 
-            className="flex-1 flex flex-col mt-6 sm:mt-8 px-1 min-h-[300px]"
+            className="flex-1 flex flex-col min-h-[300px]"
             style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom))' }}
         >
-            <div className="flex justify-between items-end mb-4 px-1 flex-shrink-0">
-                <h3 className="text-sm font-bold text-zinc-400 dark:text-white/50 uppercase tracking-widest transition-colors">Your Tasks</h3>
-            </div>
-            
+            <h2 className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-1 mb-3">
+                Your Tasks
+            </h2>
             <AnimatePresence mode="popLayout" initial={false}>
                 {tasks.length > 0 ? (
                     <motion.div 
@@ -60,8 +58,8 @@ export const TaskList: React.FC<TaskListProps> = memo(({ tasks, onToggle, onDele
                         transition={{ duration: 0.2 }}
                         className="flex-1 flex flex-col items-center justify-center text-center space-y-4 opacity-50 mt-10"
                     >
-                        <div className="w-16 h-16 rounded-3xl liquid-glass flex items-center justify-center">
-                            <SlidersHorizontal className="text-zinc-400 dark:text-white/30" size={24} />
+                        <div className="w-16 h-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center">
+                            <ClipboardList className="text-zinc-400 dark:text-white/30" size={24} />
                         </div>
                         <div className="space-y-1">
                             <p className="text-zinc-900 dark:text-white font-medium text-sm">No tasks found</p>

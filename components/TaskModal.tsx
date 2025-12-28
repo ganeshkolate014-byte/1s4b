@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Sparkles, Zap, AlertCircle, ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
+import { X, Clock, Sparkles, Minus, AlertTriangle, ArrowUp, Calendar as CalendarIcon, Hash, Flag } from 'lucide-react';
 import { Task, Category, Priority } from '../types';
 import { CATEGORIES, CATEGORY_ICONS } from '../constants';
 import { LiquidButton } from './LiquidButton';
@@ -13,117 +12,107 @@ interface TaskModalProps {
   editingTask: Task | null;
 }
 
-const PRIORITY_THEME = {
-    low: { bg: 'bg-sky-500', text: 'text-white', icon: 'text-white' },
-    medium: { bg: 'bg-amber-500', text: 'text-black', icon: 'text-black' },
-    high: { bg: 'bg-rose-500', text: 'text-white', icon: 'text-white' }
-};
-
-const priorityConfig = {
-    low: { label: 'Low', icon: <ArrowUp className="rotate-180" size={14} /> },
-    medium: { label: 'Medium', icon: <Zap size={14} /> },
-    high: { label: 'Critical', icon: <AlertCircle size={14} /> }
+const PRIORITY_COLORS = {
+    low: 'bg-blue-500',
+    medium: 'bg-amber-400',
+    high: 'bg-rose-500'
 };
 
 const weekdayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+
+// --- Sub Components ---
 
 const DateItem = memo(({ date, isSelected, onSelect }: any) => (
     <button
         type="button"
         onClick={() => onSelect(date.full)}
         className={`
-            flex flex-col items-center justify-center min-w-[56px] h-[72px] rounded-2xl border transition-all duration-200 relative overflow-hidden flex-shrink-0
+            relative flex flex-col items-center justify-center min-w-[3.5rem] h-[4.5rem] rounded-2xl transition-all duration-300
             ${isSelected 
-                ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
-                : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1]'}
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-lg scale-105 z-10' 
+                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-700'}
         `}
     >
-        <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
-            {date.isToday ? 'TDY' : date.dayName}
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-0.5">
+            {date.isToday ? 'Today' : date.dayName}
         </span>
-        <span className="text-lg font-bold leading-none">
+        <span className="text-xl font-bold leading-none">
             {date.dayNum}
         </span>
+        {isSelected && (
+            <motion.div 
+                layoutId="active-date-dot"
+                className="absolute -bottom-2 w-1 h-1 rounded-full bg-zinc-900 dark:bg-white"
+                transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+            />
+        )}
     </button>
 ));
 
-const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate, customDateDisplay }: any) => (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mask-linear-fade px-1">
-        <div className="relative flex-shrink-0">
-            <input 
-                type="date"
-                value={selectedDate}
-                onChange={(e) => {
-                    if(e.target.value) onSelect(e.target.value);
-                }}
-                className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
-                aria-label="Pick a date"
-            />
-            <button
-                type="button"
-                className={`
-                    flex flex-col items-center justify-center w-[56px] h-[72px] rounded-2xl border transition-all duration-200
-                    ${isCustomDate 
-                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white scale-100 z-10' 
-                        : 'bg-black/5 text-zinc-400 border-transparent hover:bg-black/10 hover:text-zinc-900 dark:bg-white/[0.05] dark:text-white/40 dark:hover:bg-white/[0.1] dark:hover:text-white'}
-                `}
-            >
-                {isCustomDate && customDateDisplay ? (
-                    <>
-                        <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-60">
-                            {customDateDisplay.month}
-                        </span>
-                        <span className="text-lg font-bold leading-none">
-                            {customDateDisplay.day}
-                        </span>
-                    </>
-                ) : (
-                    <>
-                        <CalendarIcon size={20} className="mb-1 opacity-80" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Pick</span>
-                    </>
-                )}
-            </button>
-        </div>
+const DateScroll = memo(({ selectedDate, onSelect, days, isCustomDate }: any) => (
+    <div className="w-full overflow-hidden">
+        <div className="flex gap-3 overflow-x-auto no-scrollbar py-2 px-1 mask-linear-fade">
+             {/* Custom Date Picker Trigger */}
+            <div className="relative flex-shrink-0">
+                <input 
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                        if(e.target.value) onSelect(e.target.value);
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
+                />
+                <button
+                    type="button"
+                    className={`
+                        flex flex-col items-center justify-center w-[3.5rem] h-[4.5rem] rounded-2xl transition-all duration-300 border-2 border-dashed
+                        ${isCustomDate 
+                            ? 'border-zinc-900 dark:border-white text-zinc-900 dark:text-white bg-transparent' 
+                            : 'border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'}
+                    `}
+                >
+                    <CalendarIcon size={20} />
+                </button>
+            </div>
 
-        {days.map((date: any) => (
-            <DateItem 
-                key={date.full} 
-                date={date} 
-                isSelected={selectedDate === date.full} 
-                onSelect={onSelect} 
-            />
-        ))}
+            {days.map((date: any) => (
+                <DateItem 
+                    key={date.full} 
+                    date={date} 
+                    isSelected={selectedDate === date.full} 
+                    onSelect={onSelect} 
+                />
+            ))}
+        </div>
     </div>
 ));
 
 const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onSelect: (p: Priority) => void }) => (
-    <div className="h-14 bg-black/5 dark:bg-white/[0.03] rounded-xl p-1 flex relative border border-black/5 dark:border-white/5">
+    <div className="flex items-center bg-zinc-200 dark:bg-zinc-900 p-1 rounded-xl h-14 w-full">
         {(['low', 'medium', 'high'] as Priority[]).map((p) => {
              const isActive = priority === p;
-             const config = priorityConfig[p];
-             const theme = PRIORITY_THEME[p];
-             
              return (
                  <button
                     key={p}
                     type="button"
                     onClick={() => onSelect(p)}
-                    className={`flex-1 relative z-10 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 ${isActive ? theme.text : 'text-zinc-400 hover:text-zinc-600 dark:text-white/30 dark:hover:text-white/50'}`}
+                    className={`
+                        flex-1 h-full rounded-lg flex items-center justify-center gap-2 relative transition-all duration-300
+                        ${isActive ? 'text-black dark:text-white font-semibold' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'}
+                    `}
                  >
                     {isActive && (
                         <motion.div
-                            layoutId="priority-pill"
-                            className={`absolute inset-0 rounded-[9px] shadow-sm ${theme.bg}`}
-                            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
+                            layoutId="priority-bg"
+                            className="absolute inset-0 bg-white dark:bg-zinc-700 shadow-sm rounded-lg"
+                            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
                         />
                     )}
-                    
                     <span className="relative z-10 flex items-center gap-1.5">
-                        <span className={isActive ? theme.icon : ''}>
-                            {config.icon}
-                        </span>
-                        <span className="text-[11px] font-bold uppercase tracking-wider">{config.label}</span>
+                         {p === 'low' && <ArrowUp className="rotate-180" size={14} />}
+                         {p === 'medium' && <Minus size={14} />}
+                         {p === 'high' && <AlertTriangle size={14} />}
+                         <span className="capitalize text-xs tracking-wide">{p}</span>
                     </span>
                  </button>
              )
@@ -132,7 +121,7 @@ const PrioritySelector = memo(({ priority, onSelect }: { priority: Priority, onS
 ));
 
 const CategorySelector = memo(({ category, onSelect }: { category: Category, onSelect: (c: Category) => void }) => (
-    <div className="flex flex-wrap gap-2 pt-2">
+    <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
          {CATEGORIES.map(cat => {
             const isActive = category === cat;
             return (
@@ -141,28 +130,21 @@ const CategorySelector = memo(({ category, onSelect }: { category: Category, onS
                     type="button"
                     onClick={() => onSelect(cat)}
                     className={`
-                        relative px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border flex items-center gap-2
+                        relative px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 shrink-0 flex items-center gap-2 border
                         ${isActive 
-                            ? 'text-white border-transparent z-10 dark:text-black' 
-                            : 'bg-transparent text-zinc-400 border-zinc-200 dark:text-white/20 dark:border-white/5 dark:hover:border-white/10'}
+                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-zinc-900 dark:border-white shadow-md transform scale-105' 
+                            : 'bg-transparent text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}
                     `}
                 >
-                    {isActive && (
-                        <motion.div
-                            layoutId="category-pill-modal"
-                            className="absolute inset-0 bg-zinc-900 dark:bg-white rounded-xl"
-                            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.3 }}
-                        />
-                    )}
-                    <span className="relative z-10 flex items-center gap-2">
-                        {CATEGORY_ICONS[cat]}
-                        {cat}
-                    </span>
+                    {CATEGORY_ICONS[cat] && React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 14 })}
+                    {cat}
                 </button>
             )
          })}
-     </div>
+    </div>
 ));
+
+// --- Main Modal ---
 
 export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, editingTask }) => {
   const [title, setTitle] = useState('');
@@ -174,6 +156,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Generate days
   const nextDays = useMemo(() => {
     const days = [];
     const today = new Date();
@@ -182,7 +165,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
         d.setDate(today.getDate() + i);
         days.push({
             full: d.toISOString().split('T')[0],
-            dayName: i === 0 ? 'TDY' : weekdayFormatter.format(d),
+            dayName: weekdayFormatter.format(d),
             dayNum: d.getDate(),
             isToday: i === 0
         });
@@ -194,16 +177,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
       if (!selectedDate) return false;
       return !nextDays.some(d => d.full === selectedDate);
   }, [selectedDate, nextDays]);
-
-  const customDateDisplay = useMemo(() => {
-      if (!selectedDate || !isCustomDate) return null;
-      const [y, m, d] = selectedDate.split('-').map(Number);
-      const dateObj = new Date(y, m - 1, d);
-      return {
-          month: dateObj.toLocaleDateString('en-US', { month: 'short' }),
-          day: d
-      };
-  }, [selectedDate, isCustomDate]);
 
   const handleDateSelect = useCallback((date: string) => setSelectedDate(date), []);
   const handlePrioritySelect = useCallback((p: Priority) => setPriority(p), []);
@@ -238,6 +211,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
     }
   }, [editingTask, isOpen, nextDays]);
 
+  // Textarea Auto-grow
   useEffect(() => {
       if (textareaRef.current && isOpen) {
           textareaRef.current.style.height = 'auto';
@@ -267,105 +241,124 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, e
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
             onClick={onClose}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-[2px] z-[60]"
-            style={{ willChange: 'opacity' }}
+            className="fixed inset-0 bg-black/60 z-[60]"
           />
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: "tween", ease: [0.32, 0.72, 0, 1], duration: 0.5 }}
-            className="fixed bottom-0 left-0 right-0 md:top-auto md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[460px] w-full z-[70] flex flex-col justify-end"
-            style={{ willChange: 'transform' }}
+            transition={{ type: "tween", ease: "circOut", duration: 0.3 }}
+            className="fixed inset-x-0 bottom-0 z-[70] flex flex-col items-center justify-end pointer-events-none"
           >
-             <div className="liquid-glass-heavy md:rounded-[2.5rem] rounded-t-[2.5rem] p-0 overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-                
-                <div className="flex justify-between items-center p-5 pb-2 shrink-0 z-20 bg-inherit relative">
-                    <button 
-                        type="button"
-                        onClick={onClose}
-                        className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-zinc-500 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 border border-black/5 dark:border-white/5"
-                    >
-                        <X size={20} />
-                    </button>
-                    <div className="px-5 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                         <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white/60">
-                            {editingTask ? 'Edit Task' : 'New Task'}
-                         </span>
-                    </div>
-                </div>
-
-                <div className="overflow-y-auto overscroll-contain flex-1 custom-scrollbar">
-                    <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
-                        
-                        <div className="px-5 sm:px-6 py-4 space-y-3 shrink-0">
-                            <textarea
-                                ref={textareaRef}
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="What needs to be done?"
-                                rows={1}
-                                className="w-full bg-transparent text-[22px] sm:text-3xl font-medium text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-white/40 outline-none border-none p-0 resize-none leading-tight"
-                                style={{ minHeight: '32px' }}
-                            />
-                            <input
-                                type="text"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Add details (optional)"
-                                className="w-full bg-transparent text-[15px] sm:text-[17px] text-zinc-500 dark:text-white/50 placeholder-zinc-300 dark:placeholder-white/20 outline-none border-none p-0"
-                            />
-                        </div>
-
-                        <div 
-                            className="bg-zinc-50 dark:bg-[#18181b] p-6 space-y-8 mt-auto border-t border-black/5 dark:border-white/5 relative"
-                            style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-                        >
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between pl-1">
-                                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 flex items-center gap-2">
-                                        <Clock size={14} /> Schedule & Time
-                                    </label>
-                                    <div className="relative">
-                                        <input 
-                                            type="time" 
-                                            value={selectedTime}
-                                            onChange={(e) => setSelectedTime(e.target.value)}
-                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        />
-                                        <div className="px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/5 flex items-center gap-2">
-                                            <span className="text-[13px] font-bold text-zinc-800 dark:text-white/80">{selectedTime}</span>
-                                        </div>
-                                    </div>
+             <div className="w-full max-w-lg mx-auto pointer-events-auto">
+                 {/* Main Sheet */}
+                 <div className="bg-[#f2f2f7] dark:bg-[#000000] rounded-t-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+                    
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
+                            
+                            {/* Input Section - Clean & Large */}
+                            <div className="px-8 pt-6 pb-8 bg-white dark:bg-[#1c1c1e] rounded-b-[2.5rem] shadow-sm z-10 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="New Task"
+                                        rows={1}
+                                        className="w-full bg-transparent text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-white placeholder-zinc-300 dark:placeholder-zinc-700 outline-none border-none p-0 resize-none leading-tight tracking-tight"
+                                        style={{ minHeight: '44px' }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={onClose}
+                                        className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-full text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
-                                
-                                <DateScroll 
-                                    selectedDate={selectedDate}
-                                    onSelect={handleDateSelect}
-                                    days={nextDays}
-                                    isCustomDate={isCustomDate}
-                                    customDateDisplay={customDateDisplay}
+                                <input
+                                    type="text"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="Add a note..."
+                                    className="w-full bg-transparent text-lg text-zinc-500 dark:text-zinc-400 placeholder-zinc-300 dark:placeholder-zinc-700 outline-none border-none p-0"
                                 />
                             </div>
 
-                            <div className="space-y-3 relative">
-                                 <div className="flex justify-between items-center px-1">
-                                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30">Impact Level</label>
-                                 </div>
-                                 <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
+                            {/* Controls "Deck" */}
+                            <div className="p-6 space-y-6">
+                                
+                                {/* Date Section */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-600 px-1">
+                                        <CalendarIcon size={14} />
+                                        <span className="text-xs font-bold uppercase tracking-widest">When</span>
+                                    </div>
+                                    <DateScroll 
+                                        selectedDate={selectedDate}
+                                        onSelect={handleDateSelect}
+                                        days={nextDays}
+                                        isCustomDate={isCustomDate}
+                                    />
+                                </div>
+
+                                {/* Context Grid */}
+                                <div className="grid grid-cols-5 gap-4">
+                                    {/* Time - Spans 2 cols */}
+                                    <div className="col-span-2 space-y-3">
+                                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-600 px-1">
+                                            <Clock size={14} />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Time</span>
+                                        </div>
+                                        <div className="relative h-14 bg-white dark:bg-[#1c1c1e] rounded-xl flex items-center justify-center border border-zinc-200 dark:border-zinc-800 overflow-hidden group">
+                                            <input 
+                                                type="time" 
+                                                value={selectedTime}
+                                                onChange={(e) => setSelectedTime(e.target.value)}
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                            />
+                                            <span className="text-lg font-bold text-zinc-900 dark:text-white group-hover:scale-110 transition-transform">
+                                                {selectedTime}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Priority - Spans 3 cols */}
+                                    <div className="col-span-3 space-y-3">
+                                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-600 px-1">
+                                            <Flag size={14} />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Priority</span>
+                                        </div>
+                                        <PrioritySelector priority={priority} onSelect={handlePrioritySelect} />
+                                    </div>
+                                </div>
+
+                                {/* Category Section */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-600 px-1">
+                                        <Hash size={14} />
+                                        <span className="text-xs font-bold uppercase tracking-widest">Category</span>
+                                    </div>
+                                    <CategorySelector category={category} onSelect={handleCategorySelect} />
+                                </div>
+
+                                {/* Action Button */}
+                                <div className="pt-2">
+                                    <LiquidButton type="submit" priority={priority}>
+                                        <Sparkles size={18} className="text-white dark:text-black/60" />
+                                        <span className="text-white dark:text-black text-sm">{editingTask ? 'Save Changes' : 'Create Task'}</span>
+                                    </LiquidButton>
+                                </div>
+
+                                {/* Safety Padding for Home Bar */}
+                                <div className="h-6" />
                             </div>
-
-                            <CategorySelector category={category} onSelect={handleCategorySelect} />
-
-                            <LiquidButton type="submit" priority={priority}>
-                               <Sparkles size={16} className="text-white dark:text-black/60" />
-                               <span className="text-white dark:text-black">{editingTask ? 'Save Changes' : 'Create Task'}</span>
-                            </LiquidButton>
-                        </div>
-                    </form>
-                </div>
+                        </form>
+                    </div>
+                 </div>
              </div>
           </motion.div>
         </>
